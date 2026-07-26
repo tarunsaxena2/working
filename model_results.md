@@ -133,3 +133,34 @@ Comparison Metrics:
 Summary Status: ✅ Completed
 
 The final evaluation confirms that the LightGBM + SMOTE (Tuned) pipeline is the best-performing model, achieving a Macro F1 Score of 0.9908, Precision of 0.9951, and Recall of 0.9866 — comfortably exceeding the target KPI of 0.85. This model was carried forward for robustness testing (noise sensitivity, threshold tuning) and SHAP-based explainability analysis in Week 4, and was tagged as the final v1.0.0 release. Full details are available in `README.md`.
+
+---
+
+## Week 4 — Final Held-Out Test Set Metrics (Optimal Threshold)
+
+While Week 3 metrics above reflect 5-Fold Stratified Cross-Validation performance, Week 4 (`week4_robustness.ipynb`) evaluated the final model on a genuinely held-out 20% test set, after threshold optimization (maximizing F1 across a 0.1–0.9 sweep). These numbers are the most representative of real deployment behavior.
+
+- Optimal Decision Threshold: **0.85**
+- Precision (Failure class): **0.8684**
+- Recall (Failure class): **0.9706**
+- F1 Score (Failure class): **0.9167**
+
+**Full classification report (test set, n=2000):**
+
+| Class | Precision | Recall | F1-score | Support |
+|-------|-----------|--------|----------|---------|
+| No Failure | 1.00 | 0.99 | 1.00 | 1932 |
+| Failure | 0.87 | 0.97 | 0.92 | 68 |
+| **Macro avg** | **0.93** | **0.98** | **0.96** | 2000 |
+| Weighted avg | 0.99 | 0.99 | 0.99 | 2000 |
+
+**Robustness under injected Gaussian noise:**
+
+| Noise Level | Std Dev | Macro F1 |
+|-------------|---------|----------|
+| Clean | 0.00 | Baseline (highest) |
+| Low | 0.05 | Minimal degradation |
+| Medium | 0.15 | Moderate degradation, near KPI target |
+| High | 0.30 | Largest degradation, still evaluated for deployment readiness |
+
+> Note: The Week 3 CV metrics (0.9908 / 0.9951 / 0.9866) reflect cross-validation performance during model selection and tuning. The Week 4 metrics above reflect single held-out test-set performance at the deployment-selected decision threshold, and are the numbers most relevant for the "Live Demo" and deployment-readiness discussion in `README.md`.

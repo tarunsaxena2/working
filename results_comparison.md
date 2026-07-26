@@ -176,3 +176,33 @@ The final winning model was selected based on verified cross-validation metrics:
 As expected, the SMOTE + LightGBM pipeline outperformed the Random Forest baselines by addressing class imbalance more effectively through SMOTE while leveraging LightGBM's gradient boosting algorithm to model complex, non-linear feature interactions (including the added external contextual features).
 
 **Final Status:** ✅ Comparison completed. LightGBM + SMOTE (Tuned) confirmed as the final winning model and carried forward to Week 4 robustness testing, threshold optimization, and deployment preparation (v1.0.0 release).
+
+---
+
+# Week 4 — Final Held-Out Test Set & Robustness Results
+
+The Week 3 table above reports 5-Fold Cross-Validation metrics used for model selection. Week 4 (`week4_robustness.ipynb`) validated the final model on a genuinely held-out 20% test set, after sweeping decision thresholds from 0.1–0.9 to select the optimal operating point.
+
+## Final Test Set Metrics (Optimal Threshold = 0.85)
+
+| Metric | Value (Failure class) | Macro avg |
+|--------|------------------------|-----------|
+| Precision | 0.8684 | 0.93 |
+| Recall | 0.9706 | 0.98 |
+| F1 Score | 0.9167 | 0.96 |
+
+- Support: 2000 test samples (1932 No Failure, 68 Failure)
+- Weighted avg Precision/Recall/F1: 0.99 / 0.99 / 0.99
+
+## Noise Robustness Summary
+
+Gaussian noise was injected into the test set at three levels to simulate real sensor variability:
+
+| Noise Level | Std Dev (σ) | Macro F1 Trend |
+|-------------|-------------|----------------|
+| Clean | 0.00 | Highest (baseline) |
+| Low | 0.05 | Minimal degradation |
+| Medium | 0.15 | Moderate degradation, stays near target KPI |
+| High | 0.30 | Largest degradation, still assessed for deployment risk |
+
+**Conclusion:** The model remains deployment-ready under low-to-moderate sensor noise. The Week 3 CV numbers (0.9908 Macro F1) represent training-time model selection performance, while the Week 4 test-set numbers above represent realistic, single-pass, held-out performance at the chosen deployment threshold — these are the figures most relevant to the live demo and hardware-integration handoff in Part 2.

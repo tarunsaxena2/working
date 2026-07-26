@@ -93,7 +93,7 @@ def build_and_train(X, y):
         ('lgbm', LGBMClassifier(
             random_state=42, n_jobs=-1, verbose=-1,
             n_estimators=500, learning_rate=0.05,
-            num_leaves=31, scale_pos_weight=20
+            num_leaves=31, scale_pos_weight=10
         ))
     ])
     

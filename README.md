@@ -130,6 +130,8 @@ The solution follows a complete industry-standard Machine Learning lifecycle—f
 
 # 🏗 System Architecture
 
+> **Note:** The diagram below represents the **offline training pipeline** — how the model was built, trained, and evaluated. It does not yet include the real-time serving components (prediction API, live data streaming, live dashboard, alerting), which are being built in Weeks 2–4 of the current sprint. See **"Real-Time Serving Pipeline"** and **"Software Gap List (Weeks 2–4)"** below for what's coming next.
+
 ```mermaid
 flowchart TD
 
@@ -195,7 +197,70 @@ I[SHAP]
 
 A --> B --> C --> D --> E --> F --> G --> H --> I
 ```
+---
+# 🔌 Real-Time Serving Pipeline (Weeks 2–4)
 
+The training pipeline above produces the saved model artifact (`models/lgbm_retrained.pkl`). The diagram below shows the **real-time serving layer** being built on top of it — this is what turns the trained model into a live predictive maintenance system.
+
+```mermaid
+flowchart TD
+
+A[Sensor Feed / simulate_stream.py]
+
+B[sensor_mapping.py - unit conversion]
+
+C[/predict API - FastAPI/Flask/]
+
+D[Loaded Model - lgbm_retrained.pkl]
+
+E[SHAP Explainer]
+
+F[Streamlit Live Monitoring Tab]
+
+G[Risk Gauge + Alert System]
+
+H[Prediction Logging - CSV/SQLite]
+
+A --> B --> C --> D
+D --> E
+D --> F
+E --> F
+F --> G
+D --> H
+```
+
+> **Status:** Not yet built — scaffolded and implemented across Weeks 2–4 of the current sprint (see Software Gap List below). In Part 2, `simulate_stream.py` is swapped for the live ESP32 sensor feed; everything downstream stays the same.
+
+---
+
+# ✅ Week 1 Status (Foundation)
+
+* Model retrained and saved to `models/lgbm_retrained.pkl`.
+* Reload verified — `predict_single()` / `predict_batch()` return identical results to training-time output when the saved model is loaded fresh.
+* Real evaluation metrics extracted and locked in `model_results.md` and `results_comparison.md` (Week 3 CV metrics vs. Week 4 held-out test metrics, clearly separated).
+* Environment and dependency setup confirmed working for both the model-training scripts and the Streamlit dashboard.
+
+---
+
+# 🧩 Software Gap List (Weeks 2–4)
+
+The following gaps must be closed before hardware integration (Part 2) begins:
+
+| Week | Gap | Owner |
+| ---- | --- | ----- |
+| 2 | `/predict` API (FastAPI/Flask) — schema, load model, preprocess, return prediction + probability | Tarun |
+| 2 | `sensor_mapping.py` — raw sensor units → dataset feature units (e.g. °C ↔ K) | Vaibhav |
+| 2 | `simulate_stream.py` — streams CSV rows to `/predict` every 2–3 seconds like a live sensor | Vaibhav |
+| 2 | `/health` endpoint + input validation/error handling for bad payloads | Tarun |
+| 3 | Streamlit **"Live Monitoring"** tab wired to the live `/predict` API | Vaibhav |
+| 3 | SHAP explainer integrated into the live tab (bar/force plot) | Tarun |
+| 3 | Risk gauge / color indicator UI (healthy → warning → critical) | Vaibhav |
+| 3 | Inference latency optimization for live calls | Tarun |
+| 4 | Prediction logging (CSV/SQLite): timestamp, sensor values, prediction, probability | Tarun |
+| 4 | Alert system — banner + sound trigger on high risk | Vaibhav |
+| 4 | History / log viewer tab in the dashboard | Vaibhav |
+| 4 | API edge-case tests (missing fields, out-of-range values) | Tarun |
+| 4 | README "Live Demo" section + updated architecture diagram reflecting the real API/model flow | Tarun |
 ---
 
 # 📂 Dataset Overview

@@ -6,6 +6,7 @@ from sklearn.model_selection import StratifiedKFold
 # Validation Function
 # ============================================
 
+
 def validate_stratification(X, y):
 
     skf = StratifiedKFold(

@@ -37,3 +37,20 @@ def predict(reading: SensorReading):
     input_dict = reading.dict()
     result = predict_single(input_dict, model)
     return result
+
+@app.post("/predict", response_model=PredictionResponse)
+def predict(reading: SensorReading):
+    # Step 1: Convert request to dict
+    input_dict = reading.dict()
+    
+    # Step 2: (Preprocessing hook - future me yahan validation/scaling add kar sakte hain)
+    
+    # Step 3: Run prediction
+    result = predict_single(input_dict, model)
+    
+    # Step 4: Return structured response
+    return result
+
+@app.get("/")
+def root():
+    return {"message": "Predictive Maintenance API is running", "docs": "/docs"}

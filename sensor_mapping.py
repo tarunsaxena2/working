@@ -64,7 +64,7 @@ class SensorMapper:
     - Rotational speed:    RPM
     - Torque:              Newton-metres [Nm]
     - Tool wear:           Minutes [min]
-    - Type:                String (L/M/H)
+    - Type:                String (L/M/H) -> encoded as integer for the model
     - ambient_temp_C:      Celsius [°C]
     - factory_load_pct:    Percentage [%]
     - humidity_pct:        Percentage [%]
@@ -78,6 +78,9 @@ class SensorMapper:
         "torque_scale_factor":   1.0,
         "tool_wear_offset_min":  0.0,
     }
+
+    # Machine type encoding (must match training LabelEncoder order: H=0, L=1, M=2)
+    TYPE_MAPPING = {"H": 0, "L": 1, "M": 2}
 
     # Valid ranges for each feature (for validation)
     VALID_RANGES = {
@@ -108,18 +111,19 @@ class SensorMapper:
                 - humidity_pct:     Humidity percentage
 
         Returns:
-            dict: Model-ready feature dict with correct units
+            dict: Model-ready feature dict with correct units and keys
+                  matching the API's SensorReading schema.
         """
         mapped = {
-            "air_temp_k":          celsius_to_kelvin(raw["air_temp_c"]) + self.CALIBRATION["air_temp_offset_k"],
-            "process_temp_k":      celsius_to_kelvin(raw["process_temp_c"]) + self.CALIBRATION["process_temp_offset_k"],
-            "rot_speed_rpm":       raw["rot_speed_rpm"] * self.CALIBRATION["rpm_scale_factor"],
-            "torque_nm":           raw["torque_nm"] * self.CALIBRATION["torque_scale_factor"],
-            "tool_wear_min":       raw["tool_wear_min"] + self.CALIBRATION["tool_wear_offset_min"],
-            "machine_type":        raw["machine_type"],
-            "ambient_temp_c":      raw["ambient_temp_c"],
-            "factory_load_pct":    raw["factory_load_pct"],
-            "humidity_pct":        raw["humidity_pct"],
+            "Air_temperature_K":     celsius_to_kelvin(raw["air_temp_c"]) + self.CALIBRATION["air_temp_offset_k"],
+            "Process_temperature_K": celsius_to_kelvin(raw["process_temp_c"]) + self.CALIBRATION["process_temp_offset_k"],
+            "Rotational_speed_rpm":  raw["rot_speed_rpm"] * self.CALIBRATION["rpm_scale_factor"],
+            "Torque_Nm":             raw["torque_nm"] * self.CALIBRATION["torque_scale_factor"],
+            "Tool_wear_min":         raw["tool_wear_min"] + self.CALIBRATION["tool_wear_offset_min"],
+            "Type_enc":              self.TYPE_MAPPING[raw["machine_type"]],
+            "ambient_temp_C":        raw["ambient_temp_c"],
+            "factory_load_pct":      raw["factory_load_pct"],
+            "humidity_pct":          raw["humidity_pct"],
         }
         return mapped
 
@@ -132,12 +136,12 @@ class SensorMapper:
         """
         errors = []
         check_map = {
-            "Air_temperature_K_":     mapped["air_temp_k"],
-            "Process_temperature_K_": mapped["process_temp_k"],
-            "Rotational_speed_rpm_":  mapped["rot_speed_rpm"],
-            "Torque_Nm_":             mapped["torque_nm"],
-            "Tool_wear_min_":         mapped["tool_wear_min"],
-            "ambient_temp_C":         mapped["ambient_temp_c"],
+            "Air_temperature_K_":     mapped["Air_temperature_K"],
+            "Process_temperature_K_": mapped["Process_temperature_K"],
+            "Rotational_speed_rpm_":  mapped["Rotational_speed_rpm"],
+            "Torque_Nm_":             mapped["Torque_Nm"],
+            "Tool_wear_min_":         mapped["Tool_wear_min"],
+            "ambient_temp_C":         mapped["ambient_temp_C"],
             "factory_load_pct":       mapped["factory_load_pct"],
             "humidity_pct":           mapped["humidity_pct"],
         }
@@ -184,9 +188,10 @@ if __name__ == "__main__":
 
     print("=== Sensor Mapping Test ===")
     print(f"Raw air temp:     {raw_reading['air_temp_c']}°C")
-    print(f"Mapped air temp:  {mapped['air_temp_k']:.2f} K")
+    print(f"Mapped air temp:  {mapped['Air_temperature_K']:.2f} K")
     print(f"Raw process temp: {raw_reading['process_temp_c']}°C")
-    print(f"Mapped proc temp: {mapped['process_temp_k']:.2f} K")
+    print(f"Mapped proc temp: {mapped['Process_temperature_K']:.2f} K")
+    print(f"Mapped Type_enc:  {mapped['Type_enc']}")
     print(f"\nValid: {is_valid}")
     if errors:
         print("Errors:", errors)

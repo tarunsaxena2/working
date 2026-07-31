@@ -35,17 +35,16 @@ def clean_col(c):
 def row_to_payload(row):
     """Convert a DataFrame row to API payload."""
     return {
-        "Air_temperature_K_":    float(row["Air temperature [K]"]),
-        "Process_temperature_K_": float(row["Process temperature [K]"]),
-        "Rotational_speed_rpm_": float(row["Rotational speed [rpm]"]),
-        "Torque_Nm_":            float(row["Torque [Nm]"]),
-        "Tool_wear_min_":        float(row["Tool wear [min]"]),
+        "Air_temperature_K":     float(row["Air temperature [K]"]),
+        "Process_temperature_K": float(row["Process temperature [K]"]),
+        "Rotational_speed_rpm":  float(row["Rotational speed [rpm]"]),
+        "Torque_Nm":             float(row["Torque [Nm]"]),
+        "Tool_wear_min":         float(row["Tool wear [min]"]),
         "Type_enc":              int(row["Type_enc"]),
         "ambient_temp_C":        float(row["ambient_temp_C"]),
         "factory_load_pct":      float(row["factory_load_pct"]),
         "humidity_pct":          float(row["humidity_pct"]),
     }
-
 def stream_to_api():
     print("=== Sensor Stream Simulator Starting ===")
     print(f"Streaming to: {API_URL}")
@@ -63,7 +62,7 @@ def stream_to_api():
 
             if response.status_code == 200:
                 result = response.json()
-                prob   = result.get("failure_probability", 0)
+                prob   = result.get("probability", 0)
                 pred   = result.get("prediction", 0)
                 actual = int(row["Machine failure"])
 

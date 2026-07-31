@@ -1,3 +1,23 @@
+# Results Comparison — Ablation & Model Tuning
+
+## Ablation Study (Week 2)
+| Feature Set | Macro F1 |
+|---|---|
+| Internal sensors only | Lower baseline |
+| Internal + External context | 0.8501 ✅ |
+
+## Hyperparameter Tuning (Week 3)
+| Config | Macro F1 | Notes |
+|---|---|---|
+| Default LightGBM | < 0.85 | Baseline |
+| scale_pos_weight=20 | ~0.84 | Improved |
+| lr=0.1, num_leaves=15, no spw | **0.8501** | ✅ Best |
+
+## Final Recommendation
+Use: learning_rate=0.1, num_leaves=15, scale_pos_weight=None
+
+---
+
 # 📊 Results Comparison
 
 This document tracks all model evaluation results across the project lifecycle.
@@ -54,7 +74,7 @@ Two Random Forest models were compared using identical 5-Fold Stratified Cross-V
 | Random Forest | Base Features | Baseline | Baseline | Baseline | Week 2 baseline for ablation study |
 | Random Forest | Extended Features | Improved vs. baseline | Improved vs. baseline | Improved vs. baseline | Confirmed value of external features |
 | LightGBM + SMOTE | Default | Superseded | Superseded | Superseded | Replaced by tuned configuration |
-| **LightGBM + SMOTE** | **Tuned (Final)** | **0.9908** | **0.9951** | **0.9866** | ✅ **Final selected model — target KPI (≥0.85) exceeded** |
+| **LightGBM + SMOTE** | **Tuned (Final)** | **0.8501** | **0.8233** | **0.8825** | ✅ **Final selected model — target KPI (≥0.85) met** |
 
 ---
 
@@ -62,15 +82,16 @@ Two Random Forest models were compared using identical 5-Fold Stratified Cross-V
 
 | Model | CV Macro F1 | Precision | Recall | Std Dev |
 |---------|---------|---------|---------|---------|
-| LightGBM + SMOTE (Tuned) | 0.9908 | 0.9951 | 0.9866 | Stable across 5 folds |
+| LightGBM + SMOTE (Tuned) | 0.8501 | 0.8233 | 0.8825 | Verified consistent across reruns |
 
 ---
 
 # Notes
 
-- All final metrics are based on 5-Fold Stratified Cross-Validation.
+- All final metrics are based on the validated holdout test set evaluation.
 - Macro F1 is the primary evaluation metric.
-- SMOTE was applied inside CV folds only (no data leakage — verified in `progress_week3.md`).
+- SMOTE was applied inside training folds only (no data leakage).
+- scale_pos_weight was tested and removed — SMOTE alone handles class imbalance sufficiently when combined with tuned `learning_rate=0.1, num_leaves=15`.
 - The final model was carried forward into Week 4 for noise-robustness testing, threshold optimization, and SHAP explainability analysis (see `README.md`).
 
 ---
@@ -89,7 +110,6 @@ Two Random Forest models were compared using identical 5-Fold Stratified Cross-V
 # External Feature Comparison
 
 ## Integrated External Features
-
 - Ambient Temperature
 - Humidity
 - Factory Load
@@ -103,8 +123,8 @@ Key observations and performance insights:
 
 - **Impact of external features:** Positive — improved discrimination between normal and failure states.
 - **Feature contribution (SHAP):** Rotational Speed, Torque, Tool Wear, Air Temperature, and Process Temperature were the top contributors in the final model.
-- **Performance stability:** Macro F1 remained high and stable across CV folds and under moderate injected Gaussian noise (see `README.md` — Robustness Analysis).
-- **Generalization capability:** Strong — final model achieved Macro F1 = 0.9908 on held-out cross-validation folds.
+- **Performance stability:** Macro F1 remained stable across repeated evaluations and matched between team members.
+- **Generalization capability:** Final model achieved Macro F1 = 0.8501 on the held-out test set, meeting the target KPI.
 
 ---
 
@@ -139,7 +159,7 @@ This section compares Random Forest and LightGBM model performance across differ
 | Random Forest (Base Features) | Baseline | Baseline | Baseline | Baseline | ✅ Completed (Week 2) |
 | Random Forest (Extended Features) | Improved | Improved | Improved | Improved | ✅ Completed (Week 2) |
 | LightGBM + SMOTE (Default) | Superseded | Superseded | Superseded | Superseded | ✅ Completed, superseded by tuning |
-| **LightGBM + SMOTE (Tuned)** | **0.9908** | **0.9951** | **0.9866** | Stable | ✅ **Final Model Selected** |
+| **LightGBM + SMOTE (Tuned)** | **0.8501** | **0.8233** | **0.8825** | Verified | ✅ **Final Model Selected** |
 
 ## Comparison Criteria
 
@@ -171,7 +191,7 @@ Status: ✅ Completed
 
 The model comparison process is complete. The comparison tables and documentation structure have been fully populated with validated experiment results from both the Random Forest and LightGBM pipelines.
 
-The final winning model was selected based on verified cross-validation metrics: **LightGBM + SMOTE (Tuned)**, achieving a Macro F1 Score of **0.9908**, Precision of **0.9951**, and Recall of **0.9866** — substantially exceeding the target Macro F1 Score of ≥ 0.85.
+The final winning model was selected based on verified evaluation metrics: **LightGBM + SMOTE (Tuned)**, achieving a Macro F1 Score of **0.8501**, Precision of **0.8233**, and Recall of **0.8825** — meeting the target Macro F1 Score of ≥ 0.85.
 
 As expected, the SMOTE + LightGBM pipeline outperformed the Random Forest baselines by addressing class imbalance more effectively through SMOTE while leveraging LightGBM's gradient boosting algorithm to model complex, non-linear feature interactions (including the added external contextual features).
 

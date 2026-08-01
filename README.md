@@ -237,6 +237,7 @@ D --> H
 Follow these steps to run the complete real-time predictive maintenance system locally.
 
 ### 1. Train / confirm the model exists
+
 ```bash
 python src/retrain.py
 ```

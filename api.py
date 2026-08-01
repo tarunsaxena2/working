@@ -8,6 +8,7 @@ Usage: uvicorn api:app --reload
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from src.predict import load_model, predict_single
+from src.logger import log_prediction
 
 app = FastAPI(title="Predictive Maintenance API", version="1.0")
 
@@ -60,6 +61,7 @@ def predict(reading: SensorReading):
     try:
         input_dict = reading.dict()
         result = predict_single(input_dict, model)
+        log_prediction(input_dict, result['prediction'], result['probability'])
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")

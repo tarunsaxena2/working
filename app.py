@@ -261,6 +261,37 @@ def console_header(icon: str, title: str, subtitle: str = "", eyebrow: str = "SY
     </div>
     """, unsafe_allow_html=True)
 
+def kpi_card(col, label, value, sub=""):
+    """Renders a small KPI card inside the given column."""
+    with col:
+        st.markdown(f"""<div class="kpi-card"><div class="kpi-label">{label}</div>
+            <div class="kpi-value" style="font-size:1.3rem;">{value}</div>
+            <div class="kpi-sub">{sub}</div></div>""", unsafe_allow_html=True)
+
+
+def section(title: str):
+    """Renders a section title with the amber accent bar."""
+    st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
+
+
+def dark_fig(fig, height=350):
+    """Applies consistent dark theme styling to a Plotly figure."""
+    fig.update_layout(
+        height=height,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#EAF0F7",
+    )
+    return fig
+
+
+def info_box(html_content: str):
+    """Renders an info box with consistent styling."""
+    st.markdown(f"""<div style="background: rgba(47,217,203,0.08);
+        border: 1px solid rgba(47,217,203,0.3); border-left: 3px solid #2FD9CB;
+        border-radius: 10px; padding: 14px 18px; font-size: 0.9rem;
+        color: #A9B6C9; line-height: 1.7;">{html_content}</div>""",
+        unsafe_allow_html=True)
 
 # =================================================================
 # DATA LOADING + FEATURE ENGINEERING (mirrors src/retrain.py)
@@ -876,8 +907,8 @@ elif page == "📡 Live Monitoring":
                             lgbm_live  = pipeline.named_steps.get("lgbm", pipeline)
                             exp_live   = shap.TreeExplainer(lgbm_live)
                             x_live     = pd.DataFrame([payload])
-                            x_live.columns = [clean_col(c) for c in x_live.columns]
-                            x_live     = x_live[X.columns]
+                            x_live     = x_live[list(payload.keys())]  # preserve payload's own order
+                            x_live.columns = X.columns  # align names positionally with training columns
                             sv_live    = exp_live.shap_values(x_live)
                             sv_live    = sv_live[1] if isinstance(sv_live, list) else sv_live
                             contrib    = pd.Series(sv_live[0], index=X.columns).sort_values()
@@ -918,205 +949,6 @@ elif page == "📡 Live Monitoring":
     info_box(
         "<b>How to use Live Monitoring:</b><br>"
         "1️⃣ Start the API: <code>python api.py</code><br>"
-        "2️⃣ Start the simulator: <code>python simulate_stream.py</code><br>"
-        "3️⃣ Use the form above to send manual predictions<br>"
-        "4️⃣ Enable Auto Refresh toggle for continuous updates<br>"
-        "5️⃣ Risk gauge turns 🔴 red when failure probability &gt; 50%"
-    )
-
-# =================================================================
-# PAGE: LIVE MONITORING
-# =================================================================
-elif page == "📡 Live Monitoring":
-    console_header("📡", "Live Monitoring", eyebrow="REAL-TIME",
-                   subtitle="Live sensor stream → api.py → dashboard · Start api.py then simulate_stream.py")
-
-    API_URL = "http://127.0.0.1:8000"
-
-    # ── API Status bar ───────────────────────────────────────────
-    col_status, col_refresh = st.columns([3, 1])
-    with col_status:
-        try:
-            import requests as req
-            health = req.get(f"{API_URL}/health", timeout=2)
-            if health.status_code == 200:
-                st.markdown(
-                    '<span class="badge badge-live">'
-                    '<span class="badge-dot"></span>API ONLINE</span>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    '<span class="badge badge-demo">'
-                    '<span class="badge-dot"></span>API ERROR</span>',
-                    unsafe_allow_html=True,
-                )
-        except Exception:
-            st.markdown(
-                '<span class="badge badge-demo">'
-                '<span class="badge-dot"></span>API OFFLINE — run python -m uvicorn api:app --reload</span>',
-                unsafe_allow_html=True,
-            )
-    with col_refresh:
-        auto_refresh = st.toggle("Auto Refresh", value=False)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Quick stats bar ──────────────────────────────────────────
-    qs1, qs2, qs3, qs4 = st.columns(4)
-    kpi_card(qs1, "API Endpoint", "localhost:8000", "/predict + /health")
-    kpi_card(qs2, "Model", "LightGBM + SMOTE", "Macro F1 = 0.8501 ✅")
-    kpi_card(qs3, "Features", "9", "5 internal + 4 context")
-    kpi_card(qs4, "Threshold", "0.50", "Adjustable in Model Performance")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Risk level guide ─────────────────────────────────────────
-    section("🚦 Risk Level Guide")
-    rc1, rc2, rc3 = st.columns(3)
-    with rc1:
-        st.markdown(
-            '<div class="kpi-card success" style="text-align:center;">'
-            '<div style="font-size:2rem;">✅</div>'
-            '<div class="kpi-label">HEALTHY</div>'
-            '<div style="font-size:.85rem;color:#3ED598;">Probability &lt; 30%</div>'
-            '<div style="font-size:.75rem;color:#697788;margin-top:4px;">No action needed</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-    with rc2:
-        st.markdown(
-            '<div class="kpi-card amber" style="text-align:center;">'
-            '<div style="font-size:2rem;">⚠️</div>'
-            '<div class="kpi-label">ELEVATED RISK</div>'
-            '<div style="font-size:.85rem;color:#FFB020;">Probability 30–50%</div>'
-            '<div style="font-size:.75rem;color:#697788;margin-top:4px;">Monitor closely</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-    with rc3:
-        st.markdown(
-            '<div class="kpi-card danger" style="text-align:center;">'
-            '<div style="font-size:2rem;">🚨</div>'
-            '<div class="kpi-label">CRITICAL</div>'
-            '<div style="font-size:.85rem;color:#FF5C6C;">Probability &gt; 50%</div>'
-            '<div style="font-size:.75rem;color:#697788;margin-top:4px;">Schedule maintenance now</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Manual single prediction form ────────────────────────────
-    section("📥 Send Single Sensor Reading to API")
-    with st.form("live_predict_form"):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown("**⚙️ Internal Sensors**")
-            lm_type      = st.selectbox("Machine Type", ["L", "M", "H"], key="lm_type")
-            lm_air_temp  = st.slider("Air temperature [K]",  295.0, 305.0, 300.0, key="lm_air")
-            lm_proc_temp = st.slider("Process temp [K]",     305.0, 315.0, 310.0, key="lm_proc")
-        with c2:
-            st.markdown("**⚙️ More Sensors**")
-            lm_rot_speed = st.slider("Rotational speed [rpm]", 1000.0, 2500.0, 1500.0, key="lm_rot")
-            lm_torque    = st.slider("Torque [Nm]",              3.0,   80.0,   40.0,  key="lm_torq")
-            lm_tool_wear = st.slider("Tool wear [min]",           0.0,  250.0,  100.0, key="lm_wear")
-        with c3:
-            st.markdown("**🌍 External Context**")
-            lm_ambient  = st.slider("Ambient temp [°C]", 10.0, 45.0,  28.0, key="lm_amb")
-            lm_load     = st.slider("Factory load [%]",  50.0, 100.0, 75.0, key="lm_load")
-            lm_humidity = st.slider("Humidity [%]",      20.0, 90.0,  60.0, key="lm_hum")
-
-        send_btn = st.form_submit_button("📡 Send to API", use_container_width=True)
-
-    if send_btn:
-        from sklearn.preprocessing import LabelEncoder
-        le_live = LabelEncoder()
-        le_live.fit(["H", "L", "M"])
-        type_enc_live = int(le_live.transform([lm_type])[0])
-
-        payload = {
-            "Air_temperature_K":     lm_air_temp,
-            "Process_temperature_K": lm_proc_temp,
-            "Rotational_speed_rpm":  lm_rot_speed,
-            "Torque_Nm":             lm_torque,
-            "Tool_wear_min":         lm_tool_wear,
-            "Type_enc":              type_enc_live,
-            "ambient_temp_C":        lm_ambient,
-            "factory_load_pct":      lm_load,
-            "humidity_pct":          lm_humidity,
-        }
-
-        try:
-            import requests as req
-            response = req.post(f"{API_URL}/predict", json=payload, timeout=5)
-            if response.status_code == 200:
-                result = response.json()
-                prob = result.get("probability", 0)
-                pred = result.get("prediction", 0)
-
-                if prob >= 0.5:
-                    verdict_cls = "verdict-bad"
-                    verdict_txt = f"🚨 FAILURE PREDICTED ({prob*100:.1f}%)"
-                elif prob >= 0.3:
-                    verdict_cls = "verdict-warn"
-                    verdict_txt = f"⚠️ ELEVATED RISK ({prob*100:.1f}%)"
-                else:
-                    verdict_cls = "verdict-ok"
-                    verdict_txt = f"✅ HEALTHY ({prob*100:.1f}%)"
-
-                st.markdown(
-                    f'<div class="{verdict_cls}">{verdict_txt}</div>',
-                    unsafe_allow_html=True,
-                )
-
-                col_g, col_d = st.columns([1, 1.4])
-                with col_g:
-                    gauge_color = "#FF5C6C" if prob > 0.5 else ("#FFB020" if prob > 0.3 else "#3ED598")
-                    fig_g = go.Figure(go.Indicator(
-                        mode="gauge+number", value=prob * 100,
-                        number={"suffix": "%", "font": {"size": 36, "color": gauge_color}},
-                        title={"text": "Failure Probability", "font": {"color": "#EAF0F7"}},
-                        gauge={
-                            "axis":    {"range": [0, 100], "tickcolor": "#697788"},
-                            "bar":     {"color": gauge_color},
-                            "bgcolor": "#0D1219",
-                            "steps": [
-                                {"range": [0,  30], "color": "rgba(62,213,152,0.12)"},
-                                {"range": [30, 50], "color": "rgba(255,176,32,0.12)"},
-                                {"range": [50,100], "color": "rgba(255,92,108,0.12)"},
-                            ],
-                            "threshold": {"line": {"color": "#FF5C6C", "width": 3}, "value": 50},
-                        },
-                    ))
-                    fig_g.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", font_color="#EAF0F7")
-                    st.plotly_chart(fig_g, use_container_width=True)
-
-                with col_d:
-                    st.markdown("**📋 API Response:**")
-                    st.json(result)
-
-            else:
-                st.error(f"API Error {response.status_code}: {response.text}")
-
-        except Exception as e:
-            st.error(
-                f"❌ Cannot connect to API at `{API_URL}`\n\n"
-                f"Start the API first: `python -m uvicorn api:app --reload`\n\nError: {e}"
-            )
-
-    # ── Auto refresh ─────────────────────────────────────────────
-    if auto_refresh:
-        import time
-        st.info("🔄 Auto-refreshing every 3 seconds...")
-        time.sleep(3)
-        st.rerun()
-
-    # ── How to use ───────────────────────────────────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    info_box(
-        "<b>How to use Live Monitoring:</b><br>"
-        "1️⃣ Start the API: <code>python -m uvicorn api:app --reload</code><br>"
         "2️⃣ Start the simulator: <code>python simulate_stream.py</code><br>"
         "3️⃣ Use the form above to send manual predictions<br>"
         "4️⃣ Enable Auto Refresh toggle for continuous updates<br>"

@@ -18,12 +18,14 @@ sample = {
     "humidity_pct": 60.0
 }
 
+session = requests.Session()
+
 times = []
 n_requests = 20
 
 for i in range(n_requests):
     start = time.time()
-    response = requests.post(API_URL, json=sample, timeout=5)
+    response = session.post(API_URL, json=sample, timeout=5)
     elapsed = (time.time() - start) * 1000  # ms
     times.append(elapsed)
     print(f"Request {i+1}: {elapsed:.2f} ms (status: {response.status_code})")

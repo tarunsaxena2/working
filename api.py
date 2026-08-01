@@ -54,3 +54,25 @@ def predict(reading: SensorReading):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+# API Review Notes — Week 2 Day 5
+## Reviewer: Vaibhav Gautam
+
+## /predict Endpoint
+- [ ] Accepts all 9 features correctly
+- [ ] Returns prediction + probability
+- [ ] Handles missing fields gracefully
+- [ ] Schema matches dashboard expectations
+
+## /health Endpoint
+- [ ] Exists and responds
+- [ ] Returns model status
+
+## Edge Cases
+- [ ] Missing fields handled
+- [ ] Out-of-range values handled
+- [ ] Wrong data types handled
+
+## Overall Assessment
+Write your findings here after reviewing api.py

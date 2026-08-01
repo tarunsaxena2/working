@@ -368,9 +368,15 @@ st.sidebar.markdown("""
 page = st.sidebar.radio(
     "Navigate",
     [
-        "📊 Overview", "🔍 Dataset Explorer", "🎯 Model Performance",
-        "🧠 Explainability (SHAP)", "🌊 Noise Robustness",
-        "⚡ Live Prediction", "ℹ️ About the Project",
+        "📊 Overview",
+        "🔍 Dataset Explorer",
+        "🎯 Model Performance",
+        "🧠 Explainability (SHAP)",
+        "🌊 Noise Robustness",
+        "⚡ Live Prediction",
+        "📡 Live Monitoring",
+        "🖼️ Output Gallery",
+        "ℹ️ About the Project",
     ],
 )
 

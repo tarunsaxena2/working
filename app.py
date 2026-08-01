@@ -206,6 +206,9 @@ st.markdown("""
         transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
     .kpi-card:hover{ transform: translateY(-2px); border-color: rgba(47,217,203,0.55); box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
+    .kpi-card.success{ border-left-color: #3ED598; }
+    .kpi-card.amber{ border-left-color: #FFB020; }
+    .kpi-card.danger{ border-left-color: #FF5C6C; }
     .kpi-label {font-family:'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase;
         letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 8px;}
     .kpi-value {font-family:'JetBrains Mono', monospace; font-size: 1.9rem; font-weight: 700; color: var(--text-hi);}
@@ -973,6 +976,48 @@ elif page == "📡 Live Monitoring":
 
 
 # =================================================================
+# PAGE: OUTPUT GALLERY
+# =================================================================
+elif page == "🖼️ Output Gallery":
+    console_header("🖼️", "Output Gallery", eyebrow="ARTEFACTS",
+                   subtitle="All PNG outputs generated during the 4-week sprint")
+
+    output_dirs = ["outputs", "notebooks/outputs", "../outputs"]
+    png_files = []
+    for d in output_dirs:
+        png_files.extend(sorted(glob.glob(os.path.join(d, "*.png"))))
+
+    if not png_files:
+        st.warning(
+            "No PNG files found in outputs/ folder. "
+            "Run the Week 3-4 notebooks to generate SHAP and PR-curve plots first."
+        )
+    else:
+        st.markdown(
+            f'<span class="badge badge-live">{len(png_files)} images found</span>',
+            unsafe_allow_html=True,
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        groups = {
+            "🔍 SHAP Analysis":        [f for f in png_files if "shap" in f.lower()],
+            "📈 Precision-Recall":      [f for f in png_files if "pr_" in f.lower() or "precision" in f.lower()],
+            "🌊 Noise Robustness":      [f for f in png_files if "noise" in f.lower() or "robustness" in f.lower()],
+            "🎯 Threshold & Confusion": [f for f in png_files if "threshold" in f.lower() or "confusion" in f.lower()],
+            "📊 EDA & Features":        [f for f in png_files if not any(
+                k in f.lower() for k in ["shap","pr_","noise","threshold","confusion","robustness","precision"])],
+        }
+
+        for group_name, files in groups.items():
+            if not files:
+                continue
+            st.markdown(f'<div class="section-title">{group_name}</div>', unsafe_allow_html=True)
+            cols = st.columns(min(3, len(files)))
+            for i, fpath in enumerate(files):
+                with cols[i % 3]:
+                    st.image(fpath, caption=os.path.basename(fpath), use_container_width=True)
+
+# =================================================================
 # PAGE: ABOUT
 # =================================================================
 else:
@@ -1020,4 +1065,7 @@ factory load, humidity).
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.caption(f"Repository: github.com/tarunsaxena2/predictive-maintance-iot · "
-               f"Dashboard rendered {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+               f"Dashboard rendered {datetime.now().strftime('%Y-%m-%d %H:%M')} · "
+               f"<a href='https://github.com/tarunsaxena2/working' target='_blank' "
+               f"style='color:#2FD9CB;'>GitHub ↗</a>",
+               unsafe_allow_html=True)

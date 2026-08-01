@@ -230,6 +230,22 @@ st.markdown("""
     .badge-demo .badge-dot{ background:#FFB020; box-shadow:0 0 8px #FFB020; }
     @keyframes pulse{ 0%{opacity:1;} 50%{opacity:0.35;} 100%{opacity:1;} }
 
+    .verdict-bad{
+        background: rgba(255,92,108,0.10); border: 1px solid rgba(255,92,108,0.35);
+        border-left: 3px solid #FF5C6C; border-radius: 10px; padding: 14px 18px;
+        font-weight: 700; color: #FF5C6C; font-size: 1.05rem; margin-bottom: 14px;
+    }
+    .verdict-warn{
+        background: rgba(255,176,32,0.10); border: 1px solid rgba(255,176,32,0.35);
+        border-left: 3px solid #FFB020; border-radius: 10px; padding: 14px 18px;
+        font-weight: 700; color: #FFB020; font-size: 1.05rem; margin-bottom: 14px;
+    }
+    .verdict-ok{
+        background: rgba(62,213,152,0.10); border: 1px solid rgba(62,213,152,0.35);
+        border-left: 3px solid #3ED598; border-radius: 10px; padding: 14px 18px;
+        font-weight: 700; color: #3ED598; font-size: 1.05rem; margin-bottom: 14px;
+    }
+
     /* ---------- Buttons / inputs ---------- */
     .stButton>button, .stFormSubmitButton>button{
         background: linear-gradient(135deg, #1A9E93 0%, #17847B 100%);

@@ -142,10 +142,10 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
     :root{
-        --bg-0:#080B10; --bg-1:#0D1219; --panel:#11161E; --panel-alt:#151B24;
-        --border:#212A36; --border-soft:#1A222C;
-        --text-hi:#EAF0F7; --text-mid:#A9B6C9; --text-dim:#697788;
-        --cyan:#2FD9CB; --amber:#FFB020; --danger:#FF5C6C; --success:#3ED598;
+        --bg-0:#F4F6FA; --bg-1:#EAEFF7; --panel:#FFFFFF; --panel-alt:#F0F4FB;
+        --border:#D1D9E6; --border-soft:#E2E8F0;
+        --text-hi:#1A202C; --text-mid:#4A5568; --text-dim:#718096;
+        --cyan:#0694A2; --amber:#D97706; --danger:#DC2626; --success:#059669;
     }
 
     html, body, [class*="css"]{ font-family:'IBM Plex Sans', sans-serif; }
@@ -154,24 +154,22 @@ st.markdown("""
     .stApp{
         background-color: var(--bg-0);
         background-image:
-            radial-gradient(1100px 550px at 100% -8%, rgba(47,217,203,0.10), transparent 60%),
-            radial-gradient(900px 500px at -5% 8%, rgba(255,176,32,0.07), transparent 55%),
-            radial-gradient(1000px 600px at 50% 115%, rgba(47,217,203,0.05), transparent 60%),
-            repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 64px),
-            repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 64px),
+            radial-gradient(1100px 550px at 100% -8%, rgba(6,148,162,0.06), transparent 60%),
+            radial-gradient(900px 500px at -5% 8%, rgba(217,119,6,0.04), transparent 55%),
             linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
         background-attachment: fixed;
     }
-    .stApp::before{
-        content:""; position: fixed; inset:0; pointer-events:none; z-index:0;
-        background: radial-gradient(1600px 900px at 50% 0%, transparent 40%, rgba(4,6,9,0.55) 100%);
-    }
+
     .block-container {padding-top: 1.4rem; padding-bottom: 3rem; max-width: 1400px; position: relative; z-index: 1;}
 
-    /* ---------- Sidebar : control-panel look ---------- */
+    /* Streamlit default text fix */
+    p, li, span, label, div { color: var(--text-hi) !important; }
+    h1, h2, h3, h4 { color: var(--text-hi) !important; }
+    .stMarkdown { color: var(--text-hi) !important; }
+
+    /* ---------- Sidebar ---------- */
     section[data-testid="stSidebar"]{
-        background: linear-gradient(180deg, rgba(10,13,19,0.92) 0%, rgba(12,16,23,0.92) 100%);
-        backdrop-filter: blur(6px);
+        background: linear-gradient(180deg, #FFFFFF 0%, #F4F6FA 100%);
         border-right: 1px solid var(--border-soft);
     }
     section[data-testid="stSidebar"] .stRadio label{
@@ -179,89 +177,108 @@ st.markdown("""
     }
     section[data-testid="stSidebar"] hr{ border-color: var(--border-soft); }
 
-    /* ---------- Page header (console readout) ---------- */
+    /* ---------- Page header ---------- */
     .console-header{
         display:flex; align-items:center; gap:14px; padding: 4px 0 14px 0;
         border-bottom: 1px solid var(--border-soft); margin-bottom: 22px;
     }
     .console-icon{
         width:46px; height:46px; min-width:46px; border-radius:10px;
-        background: linear-gradient(135deg, rgba(47,217,203,0.16), rgba(47,217,203,0.02));
-        border: 1px solid rgba(47,217,203,0.35);
+        background: linear-gradient(135deg, rgba(6,148,162,0.12), rgba(6,148,162,0.04));
+        border: 1px solid rgba(6,148,162,0.30);
         display:flex; align-items:center; justify-content:center; font-size:1.35rem;
     }
     .console-eyebrow{
         font-family:'JetBrains Mono', monospace; font-size:0.68rem; letter-spacing:0.16em;
         text-transform:uppercase; color: var(--cyan); margin-bottom: 2px;
     }
-    .console-title{ font-size:1.55rem; font-weight:700; color: var(--text-hi); line-height:1.25; }
-    .console-sub{ font-size:0.86rem; color: var(--text-dim); margin-top:2px; }
+    .console-title{ font-size:1.55rem; font-weight:700; color: var(--text-hi) !important; line-height:1.25; }
+    .console-sub{ font-size:0.86rem; color: var(--text-dim) !important; margin-top:2px; }
 
-    /* ---------- KPI / gauge cards ---------- */
+    /* ---------- KPI cards ---------- */
     .kpi-card {
-        position: relative; background: linear-gradient(160deg, rgba(17,22,30,0.92) 0%, rgba(21,27,36,0.92) 100%);
-        backdrop-filter: blur(4px);
+        position: relative;
+        background: #FFFFFF;
         border: 1px solid var(--border); border-left: 3px solid var(--cyan);
-        border-radius: 10px; padding: 16px 18px; box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+        border-radius: 10px; padding: 16px 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
-    .kpi-card:hover{ transform: translateY(-2px); border-color: rgba(47,217,203,0.55); box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
-    .kpi-card.success{ border-left-color: #3ED598; }
-    .kpi-card.amber{ border-left-color: #FFB020; }
-    .kpi-card.danger{ border-left-color: #FF5C6C; }
+    .kpi-card:hover{ transform: translateY(-2px); border-color: var(--cyan); box-shadow: 0 6px 16px rgba(0,0,0,0.10); }
     .kpi-label {font-family:'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase;
-        letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 8px;}
-    .kpi-value {font-family:'JetBrains Mono', monospace; font-size: 1.9rem; font-weight: 700; color: var(--text-hi);}
-    .kpi-sub {font-size: 0.75rem; color: var(--success); margin-top: 5px;}
+        letter-spacing: 0.1em; color: var(--text-dim) !important; margin-bottom: 8px;}
+    .kpi-value {font-family:'JetBrains Mono', monospace; font-size: 1.9rem; font-weight: 700; color: var(--text-hi) !important;}
+    .kpi-sub {font-size: 0.75rem; color: var(--success) !important; margin-top: 5px;}
 
     /* ---------- Section titles ---------- */
     .section-title {
         font-size: 1.05rem; font-weight: 600; margin-top: 0.6rem; margin-bottom: 0.7rem;
-        color: var(--text-hi); display:flex; align-items:center; gap:8px;
+        color: var(--text-hi) !important; display:flex; align-items:center; gap:8px;
     }
     .section-title::before{
         content:""; width:3px; height:16px; background: var(--amber); border-radius:2px; display:inline-block;
     }
 
-    /* ---------- Status badge with LED ---------- */
+    /* ---------- Badges ---------- */
     .badge {display: inline-flex; align-items:center; gap:6px; padding: 4px 12px; border-radius: 999px;
         font-family:'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em;}
     .badge-dot{ width:7px; height:7px; border-radius:50%; }
-    .badge-live {background: rgba(62,213,152,0.10); color: #7CF0BE; border: 1px solid rgba(62,213,152,0.35);}
-    .badge-live .badge-dot{ background:#3ED598; box-shadow:0 0 8px #3ED598; animation: pulse 1.8s infinite; }
-    .badge-demo {background: rgba(255,176,32,0.10); color: #FFCB6B; border: 1px solid rgba(255,176,32,0.35);}
-    .badge-demo .badge-dot{ background:#FFB020; box-shadow:0 0 8px #FFB020; }
+    .badge-live {background: rgba(5,150,105,0.10); color: #065F46 !important; border: 1px solid rgba(5,150,105,0.35);}
+    .badge-live .badge-dot{ background:#059669; box-shadow:0 0 8px #059669; animation: pulse 1.8s infinite; }
+    .badge-demo {background: rgba(217,119,6,0.10); color: #92400E !important; border: 1px solid rgba(217,119,6,0.35);}
+    .badge-demo .badge-dot{ background:#D97706; }
+    .badge-blue {background: rgba(6,148,162,0.10); color: #0E7490 !important; border: 1px solid rgba(6,148,162,0.35);}
     @keyframes pulse{ 0%{opacity:1;} 50%{opacity:0.35;} 100%{opacity:1;} }
 
+    /* ---------- Verdict banners ---------- */
     .verdict-bad{
-        background: rgba(255,92,108,0.10); border: 1px solid rgba(255,92,108,0.35);
-        border-left: 3px solid #FF5C6C; border-radius: 10px; padding: 14px 18px;
-        font-weight: 700; color: #FF5C6C; font-size: 1.05rem; margin-bottom: 14px;
+        background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.35);
+        border-left: 3px solid #DC2626; border-radius: 10px; padding: 14px 18px;
+        font-weight: 700; color: #DC2626 !important; font-size: 1.05rem; margin-bottom: 14px;
     }
     .verdict-warn{
-        background: rgba(255,176,32,0.10); border: 1px solid rgba(255,176,32,0.35);
-        border-left: 3px solid #FFB020; border-radius: 10px; padding: 14px 18px;
-        font-weight: 700; color: #FFB020; font-size: 1.05rem; margin-bottom: 14px;
+        background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.35);
+        border-left: 3px solid #D97706; border-radius: 10px; padding: 14px 18px;
+        font-weight: 700; color: #92400E !important; font-size: 1.05rem; margin-bottom: 14px;
     }
     .verdict-ok{
-        background: rgba(62,213,152,0.10); border: 1px solid rgba(62,213,152,0.35);
-        border-left: 3px solid #3ED598; border-radius: 10px; padding: 14px 18px;
-        font-weight: 700; color: #3ED598; font-size: 1.05rem; margin-bottom: 14px;
+        background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.35);
+        border-left: 3px solid #059669; border-radius: 10px; padding: 14px 18px;
+        font-weight: 700; color: #065F46 !important; font-size: 1.05rem; margin-bottom: 14px;
     }
 
-    /* ---------- Buttons / inputs ---------- */
+    /* ---------- Info box ---------- */
+    .info-box {
+        background: rgba(6,148,162,0.06); border: 1px solid rgba(6,148,162,0.25);
+        border-left: 3px solid var(--cyan); border-radius: 10px; padding: 14px 18px;
+        font-size: .88rem; color: var(--text-mid) !important; margin: 8px 0; line-height: 1.7;
+    }
+
+    /* ---------- Buttons ---------- */
     .stButton>button, .stFormSubmitButton>button{
-        background: linear-gradient(135deg, #1A9E93 0%, #17847B 100%);
-        color:#04140F; font-weight:700; border:none; border-radius:8px; letter-spacing:0.02em;
-        transition: filter .15s ease;
+        background: linear-gradient(135deg, #0694A2 0%, #047481 100%);
+        color:#FFFFFF !important; font-weight:700; border:none; border-radius:8px;
+        letter-spacing:0.02em; transition: filter .15s ease;
     }
-    .stButton>button:hover, .stFormSubmitButton>button:hover{ filter: brightness(1.12); }
-    div[data-baseweb="tab-list"]{ gap: 4px; }
-    button[data-baseweb="tab"]{ font-family:'JetBrains Mono', monospace; font-size:0.82rem; }
+    .stButton>button:hover, .stFormSubmitButton>button:hover{ filter: brightness(1.1); }
 
-    ::-webkit-scrollbar{ width:10px; height:10px; }
+    /* ---------- Tabs ---------- */
+    div[data-baseweb="tab-list"]{ gap: 4px; background: #F0F4FB; border-radius: 8px; padding: 4px; }
+    button[data-baseweb="tab"]{ font-family:'JetBrains Mono', monospace; font-size:0.82rem; color: var(--text-mid) !important; }
+    button[data-baseweb="tab"][aria-selected="true"]{ background: #FFFFFF; color: var(--cyan) !important; border-radius: 6px; }
+
+    /* ---------- Dataframe ---------- */
+    .stDataFrame { border: 1px solid var(--border); border-radius: 8px; }
+
+    /* ---------- Metrics ---------- */
+    [data-testid="stMetricValue"] { color: var(--text-hi) !important; }
+    [data-testid="stMetricLabel"] { color: var(--text-dim) !important; }
+
+    /* ---------- Scrollbar ---------- */
+    ::-webkit-scrollbar{ width:8px; height:8px; }
     ::-webkit-scrollbar-track{ background: var(--bg-0); }
-    ::-webkit-scrollbar-thumb{ background: #232C38; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb{ background: #CBD5E0; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover{ background: #A0AEC0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -425,6 +442,7 @@ page = st.sidebar.radio(
         "🌊 Noise Robustness",
         "⚡ Live Prediction",
         "📡 Live Monitoring",
+        "📜 Prediction History",
         "🖼️ Output Gallery",
         "ℹ️ About the Project",
     ],
@@ -1039,6 +1057,145 @@ elif page == "📡 Live Monitoring":
         '</div>',
         unsafe_allow_html=True,
     )
+
+# =================================================================
+# PAGE: PREDICTION HISTORY
+# =================================================================
+elif page == "📜 Prediction History":
+    console_header("📜", "Prediction History", eyebrow="LOGS",
+                   subtitle="All predictions logged by the API — timestamp, sensor values, prediction, probability")
+
+    log_paths = ["logs/predictions_log.csv", "predictions_log.csv"]
+    log_df = None
+    log_path_found = None
+
+    for lp in log_paths:
+        if os.path.exists(lp):
+            try:
+                log_df = pd.read_csv(lp)
+                log_path_found = lp
+                break
+            except Exception:
+                continue
+
+    if log_df is None or log_df.empty:
+        st.warning(
+            "No prediction logs found yet. "
+            "Start the API (`python -m uvicorn api:app --reload`) "
+            "and send some predictions to generate logs."
+        )
+    else:
+        # ── Summary KPIs ─────────────────────────────────────────
+        total = len(log_df)
+        if "prediction" in log_df.columns:
+            failures = int(log_df["prediction"].sum())
+            healthy  = total - failures
+        else:
+            failures = 0
+            healthy  = total
+
+        if "probability" in log_df.columns:
+            avg_prob = log_df["probability"].mean()
+            max_prob = log_df["probability"].max()
+        else:
+            avg_prob = 0.0
+            max_prob = 0.0
+
+        c1, c2, c3, c4 = st.columns(4)
+        for col, label, value, sub in [
+            (c1, "Total Predictions", f"{total:,}",       "All logged predictions"),
+            (c2, "Failures Flagged",  f"{failures:,}",    f"{failures/total*100:.1f}% of total"),
+            (c3, "Avg Probability",   f"{avg_prob:.4f}",  "Mean failure probability"),
+            (c4, "Max Probability",   f"{max_prob:.4f}",  "Highest risk seen"),
+        ]:
+            with col:
+                st.markdown(
+                    f'<div class="kpi-card">'
+                    f'<div class="kpi-label">{label}</div>'
+                    f'<div class="kpi-value" style="font-size:1.3rem;">{value}</div>'
+                    f'<div class="kpi-sub">{sub}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── Probability over time chart ───────────────────────────
+        if "probability" in log_df.columns:
+            st.markdown('<div class="section-title">📈 Failure Probability Over Time</div>',
+                        unsafe_allow_html=True)
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                y=log_df["probability"],
+                mode="lines+markers",
+                line=dict(color="#2FD9CB", width=1.5),
+                marker=dict(
+                    color=["#FF5C6C" if p >= 0.5 else "#FFB020" if p >= 0.3 else "#3ED598"
+                           for p in log_df["probability"]],
+                    size=6,
+                ),
+                name="Failure Probability",
+            ))
+            fig.add_hline(y=0.5, line_dash="dash", line_color="#FF5C6C",
+                          annotation_text="Critical (0.50)")
+            fig.add_hline(y=0.3, line_dash="dash", line_color="#FFB020",
+                          annotation_text="Warning (0.30)")
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font_color="#EAF0F7",
+                height=380,
+                xaxis_title="Prediction #",
+                yaxis_title="Failure Probability",
+                yaxis=dict(range=[0, 1]),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        # ── Prediction distribution ───────────────────────────────
+        if "prediction" in log_df.columns:
+            st.markdown('<div class="section-title">📊 Prediction Distribution</div>',
+                        unsafe_allow_html=True)
+            col_a, col_b = st.columns(2)
+
+            with col_a:
+                counts = log_df["prediction"].value_counts().rename({0: "Healthy", 1: "Failure"})
+                fig2 = px.pie(
+                    values=counts.values, names=counts.index, hole=0.55,
+                    color=counts.index,
+                    color_discrete_map={"Healthy": "#3ED598", "Failure": "#FF5C6C"},
+                )
+                fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=300)
+                st.plotly_chart(fig2, use_container_width=True)
+
+            with col_b:
+                if "probability" in log_df.columns:
+                    fig3 = px.histogram(
+                        log_df, x="probability", nbins=30,
+                        color_discrete_sequence=["#2FD9CB"],
+                        labels={"probability": "Failure Probability"},
+                    )
+                    fig3.update_layout(
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        font_color="#EAF0F7",
+                        height=300,
+                    )
+                    st.plotly_chart(fig3, use_container_width=True)
+
+        # ── Raw log table ─────────────────────────────────────────
+        st.markdown('<div class="section-title">📋 Raw Prediction Log</div>',
+                    unsafe_allow_html=True)
+        st.dataframe(log_df.tail(100), use_container_width=True, height=400)
+
+        st.download_button(
+            "⬇️ Download Full Log CSV",
+            log_df.to_csv(index=False).encode(),
+            "predictions_log.csv",
+            mime="text/csv",
+        )
+
+        st.caption(f"Log source: `{log_path_found}` · {total:,} total predictions logged")
+
 # =================================================================
 # PAGE: OUTPUT GALLERY
 # =================================================================

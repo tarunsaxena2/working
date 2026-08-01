@@ -14,6 +14,15 @@ app = FastAPI(title="Predictive Maintenance API", version="1.0")
 # Load model once at startup (not on every request)
 model = load_model()
 
+# Warm-up: run one dummy prediction to avoid cold-start latency on first real request
+_warmup_sample = {
+    "Air_temperature_K": 300.0, "Process_temperature_K": 310.0,
+    "Rotational_speed_rpm": 1500.0, "Torque_Nm": 40.0,
+    "Tool_wear_min": 0.0, "Type_enc": 1,
+    "ambient_temp_C": 28.0, "factory_load_pct": 75.0, "humidity_pct": 60.0
+}
+predict_single(_warmup_sample, model)
+
 # ---- Request Schema ----
 class SensorReading(BaseModel):
     Air_temperature_K: float = Field(..., gt=0, description="Air temperature in Kelvin")

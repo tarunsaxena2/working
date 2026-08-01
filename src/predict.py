@@ -40,11 +40,14 @@ def predict_single(input_dict, model=None):
         model = load_model()
 
     X = pd.DataFrame([input_dict])
-    pred = model.predict(X)[0]
+
+    # Single inference call — derive prediction from probability
+    # instead of calling predict() and predict_proba() separately.
     prob = model.predict_proba(X)[0][1]
+    pred = int(prob >= 0.5)
 
     return {
-        'prediction': int(pred),
+        'prediction': pred,
         'probability': float(prob)
     }
 
@@ -62,8 +65,8 @@ def predict_batch(input_df, model=None):
     if model is None:
         model = load_model()
 
-    preds = model.predict(input_df)
     probs = model.predict_proba(input_df)[:, 1]
+    preds = (probs >= 0.5).astype(int)
 
     result = input_df.copy()
     result['prediction'] = preds

@@ -425,6 +425,7 @@ page = st.sidebar.radio(
         "🌊 Noise Robustness",
         "⚡ Live Prediction",
         "📡 Live Monitoring",
+        "📜 Prediction History",
         "🖼️ Output Gallery",
         "ℹ️ About the Project",
     ],
@@ -1039,6 +1040,145 @@ elif page == "📡 Live Monitoring":
         '</div>',
         unsafe_allow_html=True,
     )
+
+# =================================================================
+# PAGE: PREDICTION HISTORY
+# =================================================================
+elif page == "📜 Prediction History":
+    console_header("📜", "Prediction History", eyebrow="LOGS",
+                   subtitle="All predictions logged by the API — timestamp, sensor values, prediction, probability")
+
+    log_paths = ["logs/predictions_log.csv", "predictions_log.csv"]
+    log_df = None
+    log_path_found = None
+
+    for lp in log_paths:
+        if os.path.exists(lp):
+            try:
+                log_df = pd.read_csv(lp)
+                log_path_found = lp
+                break
+            except Exception:
+                continue
+
+    if log_df is None or log_df.empty:
+        st.warning(
+            "No prediction logs found yet. "
+            "Start the API (`python -m uvicorn api:app --reload`) "
+            "and send some predictions to generate logs."
+        )
+    else:
+        # ── Summary KPIs ─────────────────────────────────────────
+        total = len(log_df)
+        if "prediction" in log_df.columns:
+            failures = int(log_df["prediction"].sum())
+            healthy  = total - failures
+        else:
+            failures = 0
+            healthy  = total
+
+        if "probability" in log_df.columns:
+            avg_prob = log_df["probability"].mean()
+            max_prob = log_df["probability"].max()
+        else:
+            avg_prob = 0.0
+            max_prob = 0.0
+
+        c1, c2, c3, c4 = st.columns(4)
+        for col, label, value, sub in [
+            (c1, "Total Predictions", f"{total:,}",       "All logged predictions"),
+            (c2, "Failures Flagged",  f"{failures:,}",    f"{failures/total*100:.1f}% of total"),
+            (c3, "Avg Probability",   f"{avg_prob:.4f}",  "Mean failure probability"),
+            (c4, "Max Probability",   f"{max_prob:.4f}",  "Highest risk seen"),
+        ]:
+            with col:
+                st.markdown(
+                    f'<div class="kpi-card">'
+                    f'<div class="kpi-label">{label}</div>'
+                    f'<div class="kpi-value" style="font-size:1.3rem;">{value}</div>'
+                    f'<div class="kpi-sub">{sub}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── Probability over time chart ───────────────────────────
+        if "probability" in log_df.columns:
+            st.markdown('<div class="section-title">📈 Failure Probability Over Time</div>',
+                        unsafe_allow_html=True)
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                y=log_df["probability"],
+                mode="lines+markers",
+                line=dict(color="#2FD9CB", width=1.5),
+                marker=dict(
+                    color=["#FF5C6C" if p >= 0.5 else "#FFB020" if p >= 0.3 else "#3ED598"
+                           for p in log_df["probability"]],
+                    size=6,
+                ),
+                name="Failure Probability",
+            ))
+            fig.add_hline(y=0.5, line_dash="dash", line_color="#FF5C6C",
+                          annotation_text="Critical (0.50)")
+            fig.add_hline(y=0.3, line_dash="dash", line_color="#FFB020",
+                          annotation_text="Warning (0.30)")
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font_color="#EAF0F7",
+                height=380,
+                xaxis_title="Prediction #",
+                yaxis_title="Failure Probability",
+                yaxis=dict(range=[0, 1]),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        # ── Prediction distribution ───────────────────────────────
+        if "prediction" in log_df.columns:
+            st.markdown('<div class="section-title">📊 Prediction Distribution</div>',
+                        unsafe_allow_html=True)
+            col_a, col_b = st.columns(2)
+
+            with col_a:
+                counts = log_df["prediction"].value_counts().rename({0: "Healthy", 1: "Failure"})
+                fig2 = px.pie(
+                    values=counts.values, names=counts.index, hole=0.55,
+                    color=counts.index,
+                    color_discrete_map={"Healthy": "#3ED598", "Failure": "#FF5C6C"},
+                )
+                fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=300)
+                st.plotly_chart(fig2, use_container_width=True)
+
+            with col_b:
+                if "probability" in log_df.columns:
+                    fig3 = px.histogram(
+                        log_df, x="probability", nbins=30,
+                        color_discrete_sequence=["#2FD9CB"],
+                        labels={"probability": "Failure Probability"},
+                    )
+                    fig3.update_layout(
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        font_color="#EAF0F7",
+                        height=300,
+                    )
+                    st.plotly_chart(fig3, use_container_width=True)
+
+        # ── Raw log table ─────────────────────────────────────────
+        st.markdown('<div class="section-title">📋 Raw Prediction Log</div>',
+                    unsafe_allow_html=True)
+        st.dataframe(log_df.tail(100), use_container_width=True, height=400)
+
+        st.download_button(
+            "⬇️ Download Full Log CSV",
+            log_df.to_csv(index=False).encode(),
+            "predictions_log.csv",
+            mime="text/csv",
+        )
+
+        st.caption(f"Log source: `{log_path_found}` · {total:,} total predictions logged")
+
 # =================================================================
 # PAGE: OUTPUT GALLERY
 # =================================================================

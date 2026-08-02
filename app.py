@@ -441,6 +441,7 @@ page = st.sidebar.radio(
         "🧠 Explainability (SHAP)",
         "🌊 Noise Robustness",
         "⚡ Live Prediction",
+        "💰 ROI Calculator",
         "📡 Live Monitoring",
         "📜 Prediction History",
         "🖼️ Output Gallery",
@@ -765,7 +766,74 @@ elif page == "⚡ Live Prediction":
                 except Exception:
                     st.caption("SHAP explanation unavailable for this input.")
 
+# =================================================================
+# PAGE: ROI CALCULATOR
+# =================================================================
+elif page == "💰 ROI Calculator":
+    console_header("💰", "ROI Calculator", eyebrow="BUSINESS IMPACT",
+                    subtitle="Estimate the rupee value of catching a failure before it happens")
 
+    from src.roi_calculator import estimate_savings
+
+    with st.form("roi_form"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            downtime_cost = st.number_input(
+                "Downtime cost (Rs. per hour)", min_value=0.0, value=5000.0, step=500.0
+            )
+        with c2:
+            hours_avoided = st.number_input(
+                "Estimated hours of downtime avoided", min_value=0.0, value=8.0, step=1.0
+            )
+        with c3:
+            machine_type_roi = st.selectbox("Machine Type", sorted(raw_df["Type"].unique().tolist()), key="roi_type")
+
+        st.markdown("**Sensor Reading (for live failure probability)**")
+        r1, r2, r3 = st.columns(3)
+        with r1:
+            roi_air_temp = st.slider("Air temperature [K]", 295.0, 305.0, 300.0, key="roi_air")
+            roi_proc_temp = st.slider("Process temp [K]", 305.0, 315.0, 310.0, key="roi_proc")
+        with r2:
+            roi_rot_speed = st.slider("Rotational speed [rpm]", 1000.0, 2500.0, 1500.0, key="roi_rot")
+            roi_torque = st.slider("Torque [Nm]", 3.0, 80.0, 40.0, key="roi_torq")
+        with r3:
+            roi_tool_wear = st.slider("Tool wear [min]", 0.0, 250.0, 100.0, key="roi_wear")
+
+        roi_submit = st.form_submit_button("Calculate Estimated Savings", use_container_width=True)
+
+    if roi_submit:
+        type_enc_roi = int(type_encoder.transform([machine_type_roi])[0])
+        row = {
+            "Air temperature [K]": roi_air_temp, "Process temperature [K]": roi_proc_temp,
+            "Rotational speed [rpm]": roi_rot_speed, "Torque [Nm]": roi_torque,
+            "Tool wear [min]": roi_tool_wear, "Type_enc": type_enc_roi,
+            "ambient_temp_C": 28.0, "factory_load_pct": 75.0, "humidity_pct": 60.0,
+        }
+        x_roi = pd.DataFrame([row])
+        x_roi.columns = [clean_col(c) for c in x_roi.columns]
+        x_roi = x_roi[X.columns]
+
+        proba = float(pipeline.predict_proba(x_roi)[0, 1])
+
+        result = estimate_savings(
+            downtime_cost_per_hour=downtime_cost,
+            hours_downtime_avoided=hours_avoided,
+            failure_probability=proba
+        )
+
+        c1, c2, c3 = st.columns(3)
+        kpi_card(c1, "Failure Probability", f"{proba*100:.1f}%", "from live model")
+        kpi_card(c2, "Downtime Avoided", f"{hours_avoided:.0f} hrs", f"@ Rs. {downtime_cost:.0f}/hr")
+        kpi_card(c3, "Estimated Savings", f"Rs. {result['estimated_savings']:,.2f}", "expected value")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        info_box(
+            f"<b>How this is calculated:</b><br>"
+            f"Estimated Savings = Downtime Cost/Hour (Rs. {downtime_cost:,.0f}) × "
+            f"Hours Avoided ({hours_avoided:.0f}) × Failure Probability ({proba*100:.1f}%) "
+            f"= <b>Rs. {result['estimated_savings']:,.2f}</b>"
+        )
+        
 # =================================================================
 # PAGE: LIVE MONITORING
 # =================================================================

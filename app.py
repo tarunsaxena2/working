@@ -833,7 +833,56 @@ elif page == "💰 ROI Calculator":
             f"Hours Avoided ({hours_avoided:.0f}) × Failure Probability ({proba*100:.1f}%) "
             f"= <b>Rs. {result['estimated_savings']:,.2f}</b>"
         )
-        
+        st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📈 Cumulative Savings (Live Demo)</div>', unsafe_allow_html=True)
+
+    log_path = "logs/predictions_log.csv"
+    if os.path.exists(log_path):
+        try:
+            log_df = pd.read_csv(log_path)
+            if "probability" in log_df.columns and len(log_df) > 0:
+                # Use the same downtime cost / hours-avoided assumptions as the form above
+                per_prediction_savings = log_df["probability"] * downtime_cost * hours_avoided
+                cumulative_savings = per_prediction_savings.cumsum()
+
+                fig_cum = go.Figure()
+                fig_cum.add_trace(go.Scatter(
+                    y=cumulative_savings,
+                    mode="lines+markers",
+                    line=dict(color="#059669", width=2),
+                    marker=dict(size=5, color="#059669"),
+                    fill="tozeroy",
+                    fillcolor="rgba(5,150,105,0.10)",
+                    name="Cumulative Savings"
+                ))
+                fig_cum.update_layout(
+                    height=350,
+                    xaxis_title="Prediction #",
+                    yaxis_title="Cumulative Estimated Savings (Rs.)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font_color="#1A202C",
+                )
+                st.plotly_chart(fig_cum, use_container_width=True)
+
+                total_savings = cumulative_savings.iloc[-1]
+                st.markdown(
+                    f'<div class="kpi-card" style="border-left-color:#059669;">'
+                    f'<div class="kpi-label">Total Estimated Savings So Far</div>'
+                    f'<div class="kpi-value">Rs. {total_savings:,.2f}</div>'
+                    f'<div class="kpi-sub">across {len(log_df)} logged predictions</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info("No predictions logged yet — send some predictions via Live Monitoring to see this chart grow.")
+        except Exception as e:
+            st.warning(f"Could not load prediction log: {e}")
+    else:
+        st.info(
+            "No prediction log found yet. Start the API and send predictions "
+            "(via Live Monitoring or the simulator) to populate this chart."
+        )
 # =================================================================
 # PAGE: LIVE MONITORING
 # =================================================================

@@ -643,6 +643,23 @@ elif page == "📈 Model Comparison":
         comparison_df[["model", "feature_set", "macro_f1", "precision", "recall"]],
         use_container_width=True
     )
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Feature Importance — Why One Model Wins</div>', unsafe_allow_html=True)
+
+    with st.spinner("Computing feature importances..."):
+        from src.model_comparison_data import get_feature_importance_comparison
+        importance_dict = get_feature_importance_comparison()
+
+    imp_tabs = st.tabs(list(importance_dict.keys()))
+    for tab, (label, importances) in zip(imp_tabs, importance_dict.items()):
+        with tab:
+            top_n = importances.head(10)
+            fig_imp = px.bar(
+                top_n[::-1], orientation="h",
+                labels={"value": "Feature Importance", "index": "Feature"},
+            )
+            fig_imp.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=380, showlegend=False)
+            st.plotly_chart(fig_imp, use_container_width=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     info_box(

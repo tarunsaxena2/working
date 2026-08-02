@@ -50,7 +50,8 @@ def _load_engineered_data():
 
 
 def _evaluate_feature_set(df, feature_list, y_col="Machine failure"):
-    """Run 5-fold Stratified CV with a Random Forest on the given feature set."""
+    """Run 5-fold Stratified CV with a Random Forest on the given feature set,
+    and also fit once on full data to extract feature importances."""
     X = df[feature_list]
     y = df[y_col]
 
@@ -62,17 +63,23 @@ def _evaluate_feature_set(df, feature_list, y_col="Machine failure"):
         scoring=["f1_macro", "precision_macro", "recall_macro"]
     )
 
+    # Fit once on full data just to extract feature importances (not used for scoring)
+    rf.fit(X, y)
+    importances = pd.Series(rf.feature_importances_, index=feature_list).sort_values(ascending=False)
+
     return {
         "macro_f1": round(scores["test_f1_macro"].mean(), 4),
         "precision": round(scores["test_precision_macro"].mean(), 4),
         "recall": round(scores["test_recall_macro"].mean(), 4),
+        "feature_importances": importances,
     }
 
 
 def compute_ablation_results():
     """
     Freshly re-runs the ablation study: Random Forest with vs. without
-    external contextual features. Returns a list of result dicts.
+    external contextual features. Returns a list of result dicts
+    (each including a 'feature_importances' Series for chart building).
     """
     df = _load_engineered_data()
 
@@ -93,6 +100,42 @@ def compute_ablation_results():
     ]
 
 
+def get_feature_importance_comparison():
+    """
+    Returns a dict of {label: pd.Series(feature_importances)} for the
+    'With External Features' Random Forest run, plus the production
+    LightGBM model's feature importances (loaded from the saved pipeline).
+
+    Used by the Model Comparison dashboard page to explain *why* one
+    model/feature-set wins, not just its score.
+    """
+    df = _load_engineered_data()
+    rf_result = _evaluate_feature_set(df, ext_features)
+
+    result = {
+        "Random Forest (With External Features)": rf_result["feature_importances"]
+    }
+
+    # Add the production LightGBM model's feature importances
+    try:
+        import joblib
+        pipeline = joblib.load("models/lgbm_retrained.pkl")
+        lgbm_model = pipeline.named_steps.get("lgbm", pipeline)
+        lgbm_features = [
+            "Air_temperature_K", "Process_temperature_K", "Rotational_speed_rpm",
+            "Torque_Nm", "Tool_wear_min", "Type_enc",
+            "ambient_temp_C", "factory_load_pct", "humidity_pct"
+        ]
+        lgbm_importances = pd.Series(
+            lgbm_model.feature_importances_, index=lgbm_features
+        ).sort_values(ascending=False)
+        result["LightGBM + SMOTE (Production)"] = lgbm_importances
+    except Exception as e:
+        print(f"Could not load production model importances: {e}")
+
+    return result
+
+
 def get_model_comparison_data():
     """
     Returns a DataFrame comparing:
@@ -104,8 +147,12 @@ def get_model_comparison_data():
     """
     rf_results = compute_ablation_results()
     all_results = rf_results + [PRODUCTION_MODEL_RESULTS]
-    return pd.DataFrame(all_results)
-
+    df = pd.DataFrame(all_results)
+    # Drop the feature_importances column here — it's a Series, not scalar,
+    # and is available separately via get_feature_importance_comparison()
+    if "feature_importances" in df.columns:
+        df = df.drop(columns=["feature_importances"])
+    return df
 
 if __name__ == "__main__":
     print("=== Running fresh ablation study (this may take a few seconds) ===\n")

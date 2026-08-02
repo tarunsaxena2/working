@@ -279,6 +279,31 @@ st.markdown("""
     ::-webkit-scrollbar-track{ background: var(--bg-0); }
     ::-webkit-scrollbar-thumb{ background: #CBD5E0; border-radius: 6px; }
     ::-webkit-scrollbar-thumb:hover{ background: #A0AEC0; }
+
+    /* ---------- Dark mode override (must stay LAST to win the cascade) ---------- */
+    @media (prefers-color-scheme: dark) {
+        :root{
+            --bg-0:#0D1117; --bg-1:#161B22; --panel:#161B22; --panel-alt:#1C2128;
+            --border:#30363D; --border-soft:#21262D;
+            --text-hi:#E6EDF3; --text-mid:#B0B8C4; --text-dim:#7D8590;
+            --cyan:#39C5CF; --amber:#D29922; --danger:#F85149; --success:#3FB950;
+        }
+        .stApp,
+        [data-testid="stAppViewContainer"],
+        [data-testid="stHeader"],
+        .main {
+            background-color: var(--bg-0) !important;
+            background-image:
+                radial-gradient(1100px 550px at 100% -8%, rgba(57,197,207,0.08), transparent 60%),
+                radial-gradient(900px 500px at -5% 8%, rgba(210,153,34,0.05), transparent 55%),
+                linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%) !important;
+        }
+        .kpi-card, section[data-testid="stSidebar"], div[data-baseweb="tab-list"],
+        button[data-baseweb="tab"][aria-selected="true"] {
+            background: var(--panel) !important;
+        }
+        .stDataFrame { border-color: var(--border) !important; }
+    }
 </style>
 """, unsafe_allow_html=True)
 

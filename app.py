@@ -1732,6 +1732,38 @@ elif page == "👥 About & Team":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # ── Roadmap visual ───────────────────────────────────────────
+    st.markdown('<div class="section-title">🗺️ Roadmap</div>', unsafe_allow_html=True)
+
+    roadmap_items = [
+        ("#3182CE", "✅", "ML Pipeline",      "LightGBM + SMOTE · Macro F1 = 0.8501"),
+        ("#38A169", "✅", "Working API",       "FastAPI /predict + /health · < 100ms"),
+        ("#38A169", "✅", "Live Dashboard",    "9 pages · Real-time monitoring · SHAP"),
+        ("#D69E2E", "🔄", "Software Polish",   "Landing · Fleet View · PDF Export · Deploy"),
+        ("#718096", "⏳", "Hardware Phase",    "ESP32 + Sensors → Real API feed"),
+        ("#718096", "⏳", "Demo Day",          "15 Oct deadline · Judge presentation"),
+    ]
+
+    for i, (color, icon, title, desc) in enumerate(roadmap_items):
+        connector = "" if i == len(roadmap_items)-1 else (
+            f'<div style="width:2px; height:16px; background:#E2E8F0; margin-left:15px;"></div>'
+        )
+        st.markdown(
+            f'<div style="display:flex; gap:12px; align-items:flex-start;">'
+            f'<div style="display:flex; flex-direction:column; align-items:center;">'
+            f'<div style="width:32px; height:32px; min-width:32px; background:{color}22; '
+            f'border:2px solid {color}; border-radius:50%; display:flex; align-items:center; '
+            f'justify-content:center; font-size:.9rem;">{icon}</div>'
+            f'{connector}'
+            f'</div>'
+            f'<div style="padding:4px 0 12px 0;">'
+            f'<div style="font-weight:600; color:#1A202C; font-size:.9rem;">{title}</div>'
+            f'<div style="color:#718096; font-size:.78rem;">{desc}</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
     # ── Repo + session info ──────────────────────────────────────
     st.markdown('<div class="section-title">🔗 Links & Session Info</div>', unsafe_allow_html=True)
     lc1, lc2, lc3 = st.columns(3)

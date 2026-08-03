@@ -1583,6 +1583,20 @@ elif page == "📜 Prediction History":
 # =================================================================
 # PAGE: FLEET OVERVIEW
 # =================================================================
+
+# ── Honest model comparison note ────────────────────────────
+    st.markdown(
+        '<div style="background:#EBF8FF;border:1px solid #BEE3F8;border-left:4px solid #3182CE;'
+        'border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:.88rem;color:#2C5282;">'
+        '<b>📊 Research Finding:</b> External context features (ambient temp, factory load, humidity) '
+        'are simulated in this dataset, so they act as noise for a basic Random Forest. '
+        'However, our production <b>LightGBM + SMOTE</b> pipeline still achieves '
+        '<b>Macro F1 = 0.8501</b> using the full feature set — because it handles class '
+        'imbalance properly and can extract signal even with noisy features mixed in.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
 elif page == "🏭 Fleet Overview":
     console_header("🏭", "Fleet Overview", eyebrow="MULTI-MACHINE",
                    subtitle="Live health status for all virtual machines — batch predictions via /predict API")

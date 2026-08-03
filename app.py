@@ -460,6 +460,7 @@ st.sidebar.markdown("""
 page = st.sidebar.radio(
     "Navigate",
     [
+        "🏠 Landing",
         "📊 Overview",
         "🔍 Dataset Explorer",
         "🎯 Model Performance",
@@ -493,6 +494,159 @@ if not model_is_real:
     st.sidebar.info("Run `python src/retrain.py` once to save a real model to `models/` "
                      "so the dashboard loads instantly next time.", icon="💡")
 
+
+# =================================================================
+# PAGE: LANDING
+# =================================================================
+if page == "🏠 Landing":
+    # ── Hero Banner ──────────────────────────────────────────────
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #FFFFFF 0%, #EBF8FF 50%, #F0FFF4 100%);
+        border: 1px solid #BEE3F8; border-radius: 16px;
+        padding: 52px 48px; margin-bottom: 32px; text-align: center;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    ">
+        <div style="font-size:3.5rem; margin-bottom:12px;">⚙️</div>
+        <div style="font-size:2.4rem; font-weight:800; color:#1A202C; line-height:1.2; margin-bottom:16px;">
+            Contextual Predictive Maintenance
+        </div>
+        <div style="font-size:1.15rem; color:#4A5568; max-width:620px; margin:0 auto 24px auto; line-height:1.7;">
+            An AI-powered IoT system that predicts machine failures before they happen —
+            fusing internal sensor data with real-world environmental context.
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:28px;">
+            <span style="background:#EBF8FF;color:#2B6CB0;border:1px solid #BEE3F8;
+                padding:5px 14px;border-radius:999px;font-size:.8rem;font-weight:600;">
+                LightGBM + SMOTE
+            </span>
+            <span style="background:#F0FFF4;color:#276749;border:1px solid #9AE6B4;
+                padding:5px 14px;border-radius:999px;font-size:.8rem;font-weight:600;">
+                Macro F1 = 0.8501 ✅
+            </span>
+            <span style="background:#FFF5F5;color:#9B2C2C;border:1px solid #FEB2B2;
+                padding:5px 14px;border-radius:999px;font-size:.8rem;font-weight:600;">
+                IoT Edge AI
+            </span>
+            <span style="background:#FAF5FF;color:#553C9A;border:1px solid #D6BCFA;
+                padding:5px 14px;border-radius:999px;font-size:.8rem;font-weight:600;">
+                SHAP Explainability
+            </span>
+            <span style="background:#FFFAF0;color:#7B341E;border:1px solid #FBD38D;
+                padding:5px 14px;border-radius:999px;font-size:.8rem;font-weight:600;">
+                Real-time API
+            </span>
+        </div>
+        <div style="font-size:.9rem; color:#718096;">
+            Infotact Solutions & Co. · Bengaluru · Internship 2026
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Quick Stats Strip ────────────────────────────────────────
+    st.markdown('<div class="section-title">📊 At a Glance</div>', unsafe_allow_html=True)
+    s1, s2, s3, s4, s5 = st.columns(5)
+    for col, icon, label, value in [
+        (s1, "🎯", "Macro F1",    "0.8501"),
+        (s2, "📐", "Precision",   "0.8233"),
+        (s3, "🔁", "Recall",      "0.8825"),
+        (s4, "⚖️", "Imbalance",   "28.5:1"),
+        (s5, "📦", "Dataset",     "10,000 rows"),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="kpi-card" style="text-align:center;">'
+                f'<div style="font-size:1.6rem;margin-bottom:6px;">{icon}</div>'
+                f'<div class="kpi-label">{label}</div>'
+                f'<div class="kpi-value" style="font-size:1.3rem;">{value}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Problem vs Solution ──────────────────────────────────────
+    st.markdown('<div class="section-title">🔍 Problem & Solution</div>', unsafe_allow_html=True)
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div style="background:#FFF5F5; border:1px solid #FEB2B2; border-left:4px solid #FC8181;
+            border-radius:10px; padding:20px 22px;">
+            <div style="font-size:1.1rem; font-weight:700; color:#9B2C2C; margin-bottom:10px;">
+                ❌ The Problem
+            </div>
+            <ul style="color:#742A2A; font-size:.9rem; line-height:2; margin:0; padding-left:18px;">
+                <li>Machines fail unexpectedly — costly downtime</li>
+                <li>Existing ML systems ignore external context</li>
+                <li>Rare failure events = highly imbalanced data</li>
+                <li>Black-box models — engineers can't trust them</li>
+                <li>No real-time prediction capability</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div style="background:#F0FFF4; border:1px solid #9AE6B4; border-left:4px solid #48BB78;
+            border-radius:10px; padding:20px 22px;">
+            <div style="font-size:1.1rem; font-weight:700; color:#276749; margin-bottom:10px;">
+                ✅ Our Solution
+            </div>
+            <ul style="color:#22543D; font-size:.9rem; line-height:2; margin:0; padding-left:18px;">
+                <li>Contextual data fusion — sensors + environment</li>
+                <li>SMOTE handles class imbalance correctly</li>
+                <li>LightGBM captures complex non-linear patterns</li>
+                <li>SHAP explains every prediction to engineers</li>
+                <li>FastAPI + Streamlit = real-time live dashboard</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── How it works ─────────────────────────────────────────────
+    st.markdown('<div class="section-title">⚙️ How It Works</div>', unsafe_allow_html=True)
+    steps = [
+        ("1", "📥", "IoT Sensors",        "Air temp, process temp, rotational speed, torque, tool wear"),
+        ("2", "🌍", "External Context",   "Ambient temperature, factory load, humidity"),
+        ("3", "⚖️", "SMOTE Balancing",    "Applied inside CV folds only — no data leakage"),
+        ("4", "🤖", "LightGBM Model",     "Gradient boosting — Macro F1 = 0.8501 ✅"),
+        ("5", "🔍", "SHAP Explanation",   "Tells engineers WHY a failure is predicted"),
+        ("6", "📡", "Live API",           "FastAPI /predict — responds in < 100ms"),
+        ("7", "📊", "Dashboard",          "Streamlit — 9 pages, real-time monitoring"),
+    ]
+    for step in steps:
+        num, icon, title, desc = step
+        st.markdown(
+            f'<div style="display:flex; gap:14px; align-items:flex-start; '
+            f'padding:12px 16px; background:#FFFFFF; border:1px solid #E2E8F0; '
+            f'border-radius:10px; margin:6px 0; box-shadow:0 1px 4px rgba(0,0,0,0.04);">'
+            f'<div style="min-width:32px; height:32px; background:#EBF8FF; border:1px solid #BEE3F8; '
+            f'border-radius:50%; display:flex; align-items:center; justify-content:center; '
+            f'font-weight:700; color:#2B6CB0; font-size:.85rem;">{num}</div>'
+            f'<div style="font-size:1.3rem;">{icon}</div>'
+            f'<div>'
+            f'<div style="font-weight:600; color:#1A202C; font-size:.95rem;">{title}</div>'
+            f'<div style="color:#718096; font-size:.82rem; margin-top:2px;">{desc}</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Navigate CTA ─────────────────────────────────────────────
+    st.markdown("""
+    <div style="background:#EBF8FF; border:1px solid #BEE3F8; border-radius:12px;
+        padding:20px 24px; text-align:center;">
+        <div style="font-size:1rem; font-weight:600; color:#2C5282; margin-bottom:6px;">
+            👈 Use the sidebar to explore the dashboard
+        </div>
+        <div style="font-size:.85rem; color:#4A5568;">
+            Overview · Dataset Explorer · Model Performance · SHAP · Noise Robustness ·
+            Live Prediction · Live Monitoring · Prediction History · Output Gallery · About
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # =================================================================
 # PAGE: OVERVIEW

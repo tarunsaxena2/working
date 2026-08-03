@@ -162,11 +162,18 @@ st.markdown("""
 
     .block-container {padding-top: 1.4rem; padding-bottom: 3rem; max-width: 1400px; position: relative; z-index: 1;}
 
-    /* Streamlit default text fix */
-    p, li, span, label, div { color: var(--text-hi) !important; }
-    h1, h2, h3, h4 { color: var(--text-hi) !important; }
-    .stMarkdown { color: var(--text-hi) !important; }
-
+    /* Streamlit default text fix — scoped so it doesn't override
+       inline-colored cards (e.g. the Landing / About pages) */
+    [data-testid="stMarkdownContainer"] p:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] span:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] label:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] div:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] h1:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] h2:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] h3:not([style*="color"]),
+    [data-testid="stMarkdownContainer"] h4:not([style*="color"]) {
+        color: var(--text-hi);
+    }
     /* ---------- Sidebar ---------- */
     section[data-testid="stSidebar"]{
         background: linear-gradient(180deg, #FFFFFF 0%, #F4F6FA 100%);
@@ -473,8 +480,7 @@ page = st.sidebar.radio(
         "📡 Live Monitoring",
         "📜 Prediction History",
         "🖼️ Output Gallery",
-        "ℹ️ About the Project",
-    ],
+     ],
 )
 
 st.sidebar.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
@@ -1783,4 +1789,5 @@ elif page == "👥 About & Team":
             )
 
 else:
-    st.info("Please select a page from the sidebar.")
+    st.error("Page not found. Please select a valid page from the sidebar.")
+    

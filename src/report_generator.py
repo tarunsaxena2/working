@@ -97,7 +97,49 @@ def _config_table():
     return t
 
 
-def generate_report(output_path="report.pdf", chart_image_paths=None):
+def generate_shap_chart_image(input_dict, output_image_path="shap_snapshot.png"):
+    """
+    Runs SHAP explanation for a single prediction and saves it as a PNG
+    image, ready to be embedded into the PDF report.
+
+    Parameters:
+        input_dict (dict): the 9 sensor/context features
+        output_image_path (str): where to save the PNG
+
+    Returns:
+        str: the output_image_path, or None if SHAP/model unavailable
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")  # non-interactive backend, safe for scripts/servers
+        import matplotlib.pyplot as plt
+        from src.explain import explain_single
+
+        result = explain_single(input_dict)
+        feature_names = result['feature_names']
+        shap_values = result['shap_values']
+
+        sorted_pairs = sorted(zip(feature_names, shap_values), key=lambda x: abs(x[1]), reverse=True)
+        names_sorted = [p[0] for p in sorted_pairs]
+        values_sorted = [p[1] for p in sorted_pairs]
+        colors_list = ['#DC2626' if v > 0 else '#059669' for v in values_sorted]
+
+        fig, ax = plt.subplots(figsize=(7, 4.2))
+        ax.barh(names_sorted, values_sorted, color=colors_list)
+        ax.set_xlabel("SHAP Impact on Failure Probability")
+        ax.set_title("Feature Contribution — This Prediction")
+        ax.invert_yaxis()
+        plt.tight_layout()
+        fig.savefig(output_image_path, dpi=150)
+        plt.close(fig)
+
+        return output_image_path
+    except Exception as e:
+        print(f"Could not generate SHAP chart image: {e}")
+        return None
+
+
+def generate_report(output_path="report.pdf", chart_image_paths=None, sample_prediction=None):
     """
     Generate a PDF report packaging model metrics, config, and optional charts.
 
@@ -105,6 +147,10 @@ def generate_report(output_path="report.pdf", chart_image_paths=None):
         output_path (str): where to save the PDF
         chart_image_paths (list[str], optional): list of PNG file paths to embed
             (e.g. SHAP chart, confusion matrix) — must already exist on disk
+        sample_prediction (dict, optional): a single sensor reading + its
+            prediction result, used to generate a live SHAP explanation
+            snapshot embedded in the report. Expected keys:
+            {'input': {...9 features...}, 'prediction': int, 'probability': float}
 
     Returns:
         str: the output_path, for convenience
@@ -128,6 +174,30 @@ def generate_report(output_path="report.pdf", chart_image_paths=None):
 
     story.append(Paragraph("Model Configuration", styles["SectionHeading"]))
     story.append(_config_table())
+
+    # ── Live prediction snapshot + SHAP explanation ──────────────
+    if sample_prediction is not None:
+        story.append(Paragraph("Sample Prediction — Explainability Snapshot", styles["SectionHeading"]))
+
+        pred = sample_prediction.get("prediction")
+        proba = sample_prediction.get("probability")
+        verdict = "FAILURE PREDICTED" if pred == 1 else "HEALTHY"
+
+        story.append(Paragraph(
+            f"<b>Verdict:</b> {verdict} &nbsp;&nbsp; "
+            f"<b>Failure Probability:</b> {proba*100:.2f}%",
+            styles["BodyTextSmall"]
+        ))
+        story.append(Spacer(1, 8))
+
+        shap_img_path = generate_shap_chart_image(sample_prediction.get("input", {}))
+        if shap_img_path and os.path.exists(shap_img_path):
+            story.append(Image(shap_img_path, width=440, height=260))
+        else:
+            story.append(Paragraph(
+                "(SHAP explanation could not be generated for this sample.)",
+                styles["BodyTextSmall"]
+            ))
 
     if chart_image_paths:
         story.append(Paragraph("Supporting Charts", styles["SectionHeading"]))
@@ -157,5 +227,15 @@ def generate_report(output_path="report.pdf", chart_image_paths=None):
 
 
 if __name__ == "__main__":
-    path = generate_report("test_report.pdf")
+    sample = {
+        "input": {
+            'Air_temperature_K': 298.5, 'Process_temperature_K': 308.7,
+            'Rotational_speed_rpm': 1500, 'Torque_Nm': 40.2,
+            'Tool_wear_min': 10, 'Type_enc': 1,
+            'ambient_temp_C': 28.0, 'factory_load_pct': 75.0, 'humidity_pct': 60.0
+        },
+        "prediction": 0,
+        "probability": 0.0015,
+    }
+    path = generate_report("test_report.pdf", sample_prediction=sample)
     print(f"✅ Report generated: {path}")

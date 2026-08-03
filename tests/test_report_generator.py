@@ -131,3 +131,4 @@ def test_shap_chart_generation_with_empty_input_returns_none():
     # Either it returns None (graceful failure) or somehow succeeds —
     # either way, it must not raise an exception (pytest would catch that).
     assert result is None or os.path.exists(TEST_SHAP_IMG)
+

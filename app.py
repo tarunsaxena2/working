@@ -546,12 +546,28 @@ if page == "🏠 Landing":
     # ── Quick Stats Strip ────────────────────────────────────────
     st.markdown('<div class="section-title">📊 At a Glance</div>', unsafe_allow_html=True)
     s1, s2, s3, s4, s5 = st.columns(5)
+    # Read real metrics from model_results.md
+    macro_f1_real  = "0.8501"
+    precision_real = "0.8233"
+    recall_real    = "0.8825"
+    try:
+        md_content = open("model_results.md", encoding="utf-8").read()
+        import re as _re
+        f1_match  = _re.search(r"Macro F1\s*\|\s*([\d.]+)", md_content)
+        pre_match = _re.search(r"Precision\s*\|\s*([\d.]+)", md_content)
+        rec_match = _re.search(r"Recall\s*\|\s*([\d.]+)", md_content)
+        if f1_match:  macro_f1_real  = f1_match.group(1)
+        if pre_match: precision_real = pre_match.group(1)
+        if rec_match: recall_real    = rec_match.group(1)
+    except Exception:
+        pass
+
     for col, icon, label, value in [
-        (s1, "🎯", "Macro F1",    "0.8501"),
-        (s2, "📐", "Precision",   "0.8233"),
-        (s3, "🔁", "Recall",      "0.8825"),
+        (s1, "🎯", "Macro F1",    macro_f1_real),
+        (s2, "📐", "Precision",   precision_real),
+        (s3, "🔁", "Recall",      recall_real),
         (s4, "⚖️", "Imbalance",   "28.5:1"),
-        (s5, "📦", "Dataset",     "10,000 rows"),
+        (s5, "📦", "Dataset",     f"{len(full_df):,} rows"),
     ]:
         with col:
             st.markdown(

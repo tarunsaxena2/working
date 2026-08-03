@@ -1804,6 +1804,42 @@ elif page == "🏭 Fleet Overview":
                 unsafe_allow_html=True,
             )
 
+
+# ── Fleet probability chart ──────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📊 Fleet Risk Overview Chart</div>',
+                unsafe_allow_html=True)
+
+    machine_names = [r["machine_name"] for r in fleet_results]
+    probabilities = [r["probability"] * 100 for r in fleet_results]
+    bar_colors    = [
+        "#DC2626" if p >= 50 else "#D97706" if p >= 30 else "#059669"
+        for p in probabilities
+    ]
+
+    fig_fleet = go.Figure(go.Bar(
+        x=machine_names,
+        y=probabilities,
+        marker_color=bar_colors,
+        text=[f"{p:.1f}%" for p in probabilities],
+        textposition="outside",
+    ))
+    fig_fleet.add_hline(y=50, line_dash="dash", line_color="#DC2626",
+                         annotation_text="Critical threshold (50%)")
+    fig_fleet.add_hline(y=30, line_dash="dash", line_color="#D97706",
+                         annotation_text="Warning threshold (30%)")
+    fig_fleet.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#1A202C",
+        height=380,
+        xaxis_title="Machine",
+        yaxis_title="Failure Probability (%)",
+        yaxis=dict(range=[0, 110]),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_fleet, use_container_width=True)
+
     # ── Auto refresh ─────────────────────────────────────────────
     if auto_fleet:
         import time

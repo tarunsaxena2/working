@@ -462,6 +462,7 @@ page = st.sidebar.radio(
     [
         "🏠 Landing",
         "📊 Overview",
+        "👥 About & Team",
         "🔍 Dataset Explorer",
         "🎯 Model Performance",
         "📈 Model Comparison",
@@ -1614,54 +1615,140 @@ elif page == "🖼️ Output Gallery":
                     st.image(fpath, caption=os.path.basename(fpath), use_container_width=True)
 
 # =================================================================
-# PAGE: ABOUT
+# PAGE: ABOUT & TEAM
 # =================================================================
-else:
-    console_header("ℹ️", "About This Project", eyebrow="REFERENCE",
-                    subtitle="Infotact Technical Internship Program — Advanced Data Science & Machine Learning (2026)")
+elif page == "👥 About & Team":
+    console_header("👥", "About & Team", eyebrow="PROJECT INFO",
+                   subtitle="Contextual Predictive Maintenance — Infotact Technical Internship 2026")
 
-    st.markdown("""
-This system predicts industrial equipment failures before they occur by fusing
-internal IoT sensor telemetry (air/process temperature, rotational speed, torque,
-tool wear) with simulated external contextual signals (ambient temperature,
-factory load, humidity).
-""")
-
-    st.markdown('<div class="section-title">Pipeline</div>', unsafe_allow_html=True)
-    st.markdown("""
-`data/ai4i2020.csv` → encode `Type` → simulate external context → SMOTE (train fold only)
-→ LightGBM classifier → evaluate on a held-out test split → save to `models/`
-""")
-
-    st.markdown('<div class="section-title">This Session</div>', unsafe_allow_html=True)
-    sc1, sc2, sc3 = st.columns(3)
-    for col, label, value, sub in [
-        (sc1, "Dataset", f"{len(full_df):,} rows", data_path),
-        (sc2, "Model Source", "Trained model" if model_is_real else "Trained live", model_path or "in-memory session"),
-        (sc3, "Failure Rate", f"{y.mean()*100:.2f}%", "of records flagged"),
+    # ── Team cards ───────────────────────────────────────────────
+    st.markdown('<div class="section-title">👨‍💻 Team</div>', unsafe_allow_html=True)
+    tc1, tc2 = st.columns(2)
+    for col, name, role, tasks, bg_color, text_color in [
+        (tc1, "Tarun Saxena",   "Backend / ML / Data",
+         "Model training · API development · Data pipeline · ROI calculator",
+         "#EBF8FF", "#2B6CB0"),
+        (tc2, "Vaibhav Gautam", "Dashboard / UI / Integration",
+         "Streamlit dashboard · Live Monitoring · Fleet view · Sensor mapping",
+         "#F0FFF4", "#276749"),
     ]:
         with col:
-            st.markdown(f"""<div class="kpi-card"><div class="kpi-label">{label}</div>
-                <div class="kpi-value" style="font-size:1.3rem;">{value}</div>
-                <div class="kpi-sub" style="color:#7C8A9E;">{sub}</div></div>""",
-                unsafe_allow_html=True)
-
-    st.markdown('<div class="section-title">Team</div>', unsafe_allow_html=True)
-    tc1, tc2 = st.columns(2)
-    with tc1:
-        st.markdown("""<div class="kpi-card"><div class="kpi-label">Data Engineer & Evaluation/Deployment Lead</div>
-            <div class="kpi-value" style="font-size:1.2rem;">Tarun Saxena</div></div>""", unsafe_allow_html=True)
-    with tc2:
-        st.markdown("""<div class="kpi-card"><div class="kpi-label">ML Engineer & Context Integration Lead</div>
-            <div class="kpi-value" style="font-size:1.2rem;">Vaibhav Gautam</div></div>""", unsafe_allow_html=True)
-
-    st.markdown('<div class="section-title">Tech Stack</div>', unsafe_allow_html=True)
-    st.write("`Python` · `Pandas`/`NumPy` · `LightGBM` · `Scikit-Learn` · "
-             "`Imbalanced-Learn (SMOTE)` · `SHAP` · `Streamlit` · `Plotly`")
+            st.markdown(
+                f'<div style="background:{bg_color}; border:1px solid {bg_color.replace("FF","B2")}; '
+                f'border-radius:12px; padding:22px 24px; height:100%;">'
+                f'<div style="font-size:2rem; margin-bottom:8px;">👨‍💻</div>'
+                f'<div style="font-size:1.2rem; font-weight:700; color:#1A202C;">{name}</div>'
+                f'<div style="font-size:.85rem; font-weight:600; color:{text_color}; '
+                f'margin:4px 0 10px 0;">{role}</div>'
+                f'<div style="font-size:.82rem; color:#4A5568; line-height:1.8;">{tasks}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.caption(f"Repository: github.com/tarunsaxena2/predictive-maintance-iot · "
-               f"Dashboard rendered {datetime.now().strftime('%Y-%m-%d %H:%M')} · "
-               f"<a href='https://github.com/tarunsaxena2/working' target='_blank' "
-               f"style='color:#2FD9CB;'>GitHub ↗</a>",
-               unsafe_allow_html=True)
+
+    # ── Project info ─────────────────────────────────────────────
+    st.markdown('<div class="section-title">📋 Project Information</div>', unsafe_allow_html=True)
+    info_cols = st.columns(3)
+    for col, label, value in [
+        (info_cols[0], "Organization",      "Infotact Solutions & Co."),
+        (info_cols[1], "Location",          "Bengaluru, Karnataka"),
+        (info_cols[2], "Internship Period", "25 May – 25 Aug 2026"),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="kpi-card" style="text-align:center;">'
+                f'<div class="kpi-label">{label}</div>'
+                f'<div class="kpi-value" style="font-size:1rem; line-height:1.4;">{value}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Timeline table ───────────────────────────────────────────
+    st.markdown('<div class="section-title">📅 Project Timeline</div>', unsafe_allow_html=True)
+    timeline = [
+        ("Week 1", "IoT Telemetry Ingestion",     "EDA · Class Imbalance · Rolling Features",          "✅ Complete"),
+        ("Week 2", "Contextual Data Fusion",       "External Context · Ablation Study · Fusion",         "✅ Complete"),
+        ("Week 3", "LightGBM Modeling",            "SMOTE Pipeline · SHAP · Hyperparameter Tuning",      "✅ Complete"),
+        ("Week 4", "Noise & Threshold Analysis",   "Noise Injection · PR Curves · Threshold Tuning",     "✅ Complete"),
+        ("Part 1", "Working Model — Software",     "API · Dashboard · Live Monitoring · Alert System",   "✅ Complete"),
+        ("Part 2", "Hardware Integration",         "ESP32 + Sensors → Real-time feed to API",            "🔄 Upcoming"),
+    ]
+    for wk, title, desc, status in timeline:
+        status_color = "#276749" if "Complete" in status else "#D97706"
+        status_bg    = "#F0FFF4" if "Complete" in status else "#FFFAF0"
+        st.markdown(
+            f'<div style="display:flex; gap:12px; align-items:center; '
+            f'padding:12px 16px; background:#FFFFFF; border:1px solid #E2E8F0; '
+            f'border-radius:10px; margin:5px 0;">'
+            f'<div style="min-width:70px; background:#EBF8FF; border:1px solid #BEE3F8; '
+            f'border-radius:6px; padding:4px 8px; text-align:center; '
+            f'font-size:.75rem; font-weight:700; color:#2B6CB0;">{wk}</div>'
+            f'<div style="flex:1;">'
+            f'<div style="font-weight:600; color:#1A202C; font-size:.9rem;">{title}</div>'
+            f'<div style="color:#718096; font-size:.78rem;">{desc}</div>'
+            f'</div>'
+            f'<div style="background:{status_bg}; color:{status_color}; '
+            f'border-radius:999px; padding:3px 12px; font-size:.75rem; font-weight:600; '
+            f'white-space:nowrap;">{status}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Tech stack badges ────────────────────────────────────────
+    st.markdown('<div class="section-title">🛠️ Technology Stack</div>', unsafe_allow_html=True)
+    tech_items = [
+        ("🐍", "Python 3.13",        "Core language"),
+        ("🐼", "Pandas / NumPy",     "Data processing"),
+        ("💡", "LightGBM",           "ML model"),
+        ("⚖️", "SMOTE",              "Imbalance handling"),
+        ("🔍", "SHAP",               "Explainability"),
+        ("⚡", "FastAPI",            "Prediction API"),
+        ("📊", "Streamlit",          "Dashboard"),
+        ("📈", "Plotly",             "Interactive charts"),
+        ("🐙", "GitHub",             "Version control"),
+    ]
+    rows = [tech_items[i:i+3] for i in range(0, len(tech_items), 3)]
+    for row in rows:
+        cols = st.columns(3)
+        for col, (icon, name, desc) in zip(cols, row):
+            with col:
+                st.markdown(
+                    f'<div style="display:flex; align-items:center; gap:12px; '
+                    f'padding:12px 14px; background:#FFFFFF; border:1px solid #E2E8F0; '
+                    f'border-radius:8px; margin:4px 0;">'
+                    f'<span style="font-size:1.4rem;">{icon}</span>'
+                    f'<div>'
+                    f'<div style="font-weight:600; color:#1A202C; font-size:.88rem;">{name}</div>'
+                    f'<div style="color:#718096; font-size:.75rem;">{desc}</div>'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Repo + session info ──────────────────────────────────────
+    st.markdown('<div class="section-title">🔗 Links & Session Info</div>', unsafe_allow_html=True)
+    lc1, lc2, lc3 = st.columns(3)
+    for col, label, value, sub in [
+        (lc1, "Repository",    "github.com/tarunsaxena2/working", "Working model repo"),
+        (lc2, "Dataset",       f"{data_path}  ({len(full_df):,} rows)", "AI4I 2020"),
+        (lc3, "Rendered at",   datetime.now().strftime("%Y-%m-%d  %H:%M"), "Local time"),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="kpi-card">'
+                f'<div class="kpi-label">{label}</div>'
+                f'<div class="kpi-value" style="font-size:.9rem; line-height:1.4; word-break:break-all;">{value}</div>'
+                f'<div class="kpi-sub">{sub}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+else:
+    st.info("Please select a page from the sidebar.")

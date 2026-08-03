@@ -479,6 +479,7 @@ page = st.sidebar.radio(
         "💰 ROI Calculator",
         "📡 Live Monitoring",
         "📜 Prediction History",
+        "🏭 Fleet Overview",
         "🖼️ Output Gallery",
      ],
 )
@@ -1577,6 +1578,245 @@ elif page == "📜 Prediction History":
         )
 
         st.caption(f"Log source: `{log_path_found}` · {total:,} total predictions logged")
+
+
+# =================================================================
+# PAGE: FLEET OVERVIEW
+# =================================================================
+elif page == "🏭 Fleet Overview":
+    console_header("🏭", "Fleet Overview", eyebrow="MULTI-MACHINE",
+                   subtitle="Live health status for all virtual machines — batch predictions via /predict API")
+
+    API_URL = "http://127.0.0.1:8000"
+
+    from src.fleet_simulator import get_fleet_readings, MACHINES
+
+    # ── Controls ─────────────────────────────────────────────────
+    col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 1, 1])
+    with col_ctrl1:
+        try:
+            import requests as req
+            health = req.get(f"{API_URL}/health", timeout=2)
+            if health.status_code == 200:
+                st.markdown(
+                    '<span class="badge badge-live">'
+                    '<span class="badge-dot"></span>API ONLINE — Fleet predictions live</span>',
+                    unsafe_allow_html=True,
+                )
+                api_online = True
+            else:
+                st.markdown(
+                    '<span class="badge badge-demo">'
+                    '<span class="badge-dot"></span>API ERROR</span>',
+                    unsafe_allow_html=True,
+                )
+                api_online = False
+        except Exception:
+            st.markdown(
+                '<span class="badge badge-demo">'
+                '<span class="badge-dot"></span>API OFFLINE — showing simulated data</span>',
+                unsafe_allow_html=True,
+            )
+            api_online = False
+
+    with col_ctrl2:
+        auto_fleet = st.toggle("🔄 Auto Refresh", value=False)
+    with col_ctrl3:
+        fleet_seed = st.number_input("Seed", value=42, min_value=0, max_value=9999, step=1,
+                                      help="Change seed to simulate different readings")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Get fleet readings + predictions ─────────────────────────
+    fleet_readings = get_fleet_readings(seed=int(fleet_seed))
+    fleet_results  = []
+
+    for fr in fleet_readings:
+        prob = None
+        pred = None
+        if api_online:
+            try:
+                import requests as req
+                resp = req.post(f"{API_URL}/predict", json=fr["reading"], timeout=3)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    prob = data.get("probability", 0)
+                    pred = data.get("prediction", 0)
+            except Exception:
+                pass
+
+        if prob is None:
+            # Fallback — use local pipeline
+            try:
+                import re as _re
+                import pandas as _pd
+                x_fleet = _pd.DataFrame([fr["reading"]])
+                x_fleet.columns = [_re.sub(r"[^A-Za-z0-9_]+", "_", c) for c in x_fleet.columns]
+                x_fleet = x_fleet[X.columns]
+                prob = float(pipeline.predict_proba(x_fleet)[0, 1])
+                pred = int(prob >= 0.5)
+            except Exception:
+                prob = 0.0
+                pred = 0
+
+        fleet_results.append({
+            **fr,
+            "probability": prob,
+            "prediction":  pred,
+        })
+
+    # ── Fleet-level alert banner ─────────────────────────────────
+    at_risk = sum(1 for r in fleet_results if r["probability"] >= 0.5)
+    warning  = sum(1 for r in fleet_results if 0.3 <= r["probability"] < 0.5)
+    total_machines = len(fleet_results)
+
+    if at_risk > 0:
+        st.markdown(
+            f'<div style="background:rgba(220,38,38,0.08);border:2px solid #DC2626;'
+            f'border-radius:12px;padding:16px 20px;margin-bottom:16px;">'
+            f'<div style="font-size:1.1rem;font-weight:700;color:#DC2626;">'
+            f'🚨 FLEET ALERT — {at_risk} of {total_machines} machines at critical risk!'
+            f'</div>'
+            f'<div style="font-size:.85rem;color:#9B2C2C;margin-top:4px;">'
+            f'Immediate maintenance inspection recommended.'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    elif warning > 0:
+        st.markdown(
+            f'<div style="background:rgba(217,119,6,0.08);border:1.5px solid #D97706;'
+            f'border-radius:12px;padding:16px 20px;margin-bottom:16px;">'
+            f'<div style="font-size:1.1rem;font-weight:700;color:#D97706;">'
+            f'⚠️ FLEET WARNING — {warning} of {total_machines} machines at elevated risk'
+            f'</div>'
+            f'<div style="font-size:.85rem;color:#92400E;margin-top:4px;">'
+            f'Monitor these machines closely.'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f'<div style="background:rgba(5,150,105,0.08);border:1px solid #059669;'
+            f'border-radius:12px;padding:14px 20px;margin-bottom:16px;">'
+            f'<div style="font-size:1rem;font-weight:600;color:#065F46;">'
+            f'✅ ALL CLEAR — All {total_machines} machines operating normally'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    # ── Fleet summary KPIs ───────────────────────────────────────
+    fk1, fk2, fk3, fk4 = st.columns(4)
+    for col, label, value, sub, cls in [
+        (fk1, "Total Machines",  str(total_machines),        "In this fleet",         ""),
+        (fk2, "Critical Risk",   str(at_risk),               "Prob ≥ 50%",            "danger" if at_risk > 0 else ""),
+        (fk3, "Elevated Risk",   str(warning),               "Prob 30–50%",           "amber"  if warning > 0 else ""),
+        (fk4, "Healthy",         str(total_machines - at_risk - warning), "Prob < 30%", "success"),
+    ]:
+        with col:
+            border = {"danger": "#DC2626", "amber": "#D97706", "success": "#059669"}.get(cls, "#0694A2")
+            st.markdown(
+                f'<div class="kpi-card" style="border-left-color:{border};">'
+                f'<div class="kpi-label">{label}</div>'
+                f'<div class="kpi-value">{value}</div>'
+                f'<div class="kpi-sub">{sub}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Machine cards grid ───────────────────────────────────────
+    st.markdown('<div class="section-title">🖥️ Machine Status Cards</div>', unsafe_allow_html=True)
+    card_cols = st.columns(2)
+
+    for i, result in enumerate(fleet_results):
+        prob = result["probability"]
+        pred = result["prediction"]
+
+        if prob >= 0.5:
+            status_icon  = "🚨"
+            status_text  = "CRITICAL"
+            card_border  = "#DC2626"
+            card_bg      = "rgba(220,38,38,0.05)"
+            prob_color   = "#DC2626"
+            bar_color    = "#DC2626"
+        elif prob >= 0.3:
+            status_icon  = "⚠️"
+            status_text  = "ELEVATED"
+            card_border  = "#D97706"
+            card_bg      = "rgba(217,119,6,0.05)"
+            prob_color   = "#D97706"
+            bar_color    = "#D97706"
+        else:
+            status_icon  = "✅"
+            status_text  = "HEALTHY"
+            card_border  = "#059669"
+            card_bg      = "rgba(5,150,105,0.05)"
+            prob_color   = "#059669"
+            bar_color    = "#059669"
+
+        bar_width = int(prob * 100)
+
+        with card_cols[i % 2]:
+            st.markdown(
+                f'<div style="background:{card_bg};border:1.5px solid {card_border};'
+                f'border-radius:12px;padding:18px 20px;margin:6px 0;">'
+
+                f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">'
+                f'<div>'
+                f'<div style="font-size:1rem;font-weight:700;color:#1A202C;">'
+                f'{status_icon} {result["machine_name"]}</div>'
+                f'<div style="font-size:.75rem;color:#718096;margin-top:2px;">'
+                f'{result["machine_id"]} · {result["location"]}</div>'
+                f'</div>'
+                f'<div style="background:{card_border}22;border:1px solid {card_border}55;'
+                f'border-radius:999px;padding:3px 10px;font-size:.72rem;font-weight:700;'
+                f'color:{card_border};">{status_text}</div>'
+                f'</div>'
+
+                f'<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
+                f'<span style="font-size:.8rem;color:#4A5568;">Failure Probability</span>'
+                f'<span style="font-size:.95rem;font-weight:700;color:{prob_color};">'
+                f'{prob*100:.1f}%</span>'
+                f'</div>'
+                f'<div style="background:#E2E8F0;border-radius:4px;height:8px;margin-bottom:12px;">'
+                f'<div style="background:{bar_color};width:{bar_width}%;height:100%;'
+                f'border-radius:4px;transition:width .3s ease;"></div>'
+                f'</div>'
+
+                f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;'
+                f'font-size:.75rem;color:#718096;">'
+                f'<span>⚙️ Type: <b style="color:#1A202C;">{result["machine_type"]}</b></span>'
+                f'<span>🔧 Torque: <b style="color:#1A202C;">'
+                f'{result["reading"]["Torque_Nm"]:.1f} Nm</b></span>'
+                f'<span>⏱️ Tool wear: <b style="color:#1A202C;">'
+                f'{result["reading"]["Tool_wear_min"]:.0f} min</b></span>'
+                f'<span>🔄 Speed: <b style="color:#1A202C;">'
+                f'{result["reading"]["Rotational_speed_rpm"]:.0f} rpm</b></span>'
+                f'</div>'
+
+                f'<div style="font-size:.72rem;color:#A0AEC0;margin-top:10px;">'
+                f'{result["description"]}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    # ── Auto refresh ─────────────────────────────────────────────
+    if auto_fleet:
+        import time
+        st.info("🔄 Auto-refreshing fleet status every 5 seconds...")
+        time.sleep(5)
+        st.rerun()
+
+    info_box(
+        "<b>How Fleet Overview works:</b><br>"
+        "Each machine card shows a live prediction from the /predict API. "
+        "Change the <b>Seed</b> number to simulate different sensor readings. "
+        "Enable <b>Auto Refresh</b> to watch predictions update continuously."
+    )
 
 # =================================================================
 # PAGE: OUTPUT GALLERY

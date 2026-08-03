@@ -1840,6 +1840,38 @@ elif page == "🏭 Fleet Overview":
     )
     st.plotly_chart(fig_fleet, use_container_width=True)
 
+# ── Fleet summary table ──────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📋 Fleet Summary Table</div>',
+                unsafe_allow_html=True)
+
+    summary_rows = []
+    for r in fleet_results:
+        prob = r["probability"]
+        status = "🚨 Critical" if prob >= 0.5 else "⚠️ Elevated" if prob >= 0.3 else "✅ Healthy"
+        summary_rows.append({
+            "Machine":           r["machine_name"],
+            "ID":                r["machine_id"],
+            "Type":              r["machine_type"],
+            "Location":          r["location"],
+            "Failure Prob (%)":  round(prob * 100, 2),
+            "Status":            status,
+        })
+
+    summary_df = pd.DataFrame(summary_rows)
+    st.dataframe(
+        summary_df.style.apply(
+            lambda row: [
+                "background-color: rgba(220,38,38,0.08)" if row["Status"].startswith("🚨")
+                else "background-color: rgba(217,119,6,0.08)" if row["Status"].startswith("⚠️")
+                else "background-color: rgba(5,150,105,0.08)"
+                for _ in row
+            ], axis=1
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+
     # ── Auto refresh ─────────────────────────────────────────────
     if auto_fleet:
         import time

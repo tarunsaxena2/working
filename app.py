@@ -311,6 +311,32 @@ st.markdown("""
         }
         .stDataFrame { border-color: var(--border) !important; }
     }
+
+    /* ── UI Consistency Pass ── */
+    /* Ensure all text is readable */
+    .stSelectbox label, .stSlider label, .stNumberInput label,
+    .stToggle label, .stRadio label {
+        color: #1A202C !important; font-weight: 500;
+    }
+    /* Fix metric colors */
+    [data-testid="stMetricValue"] { color: #1A202C !important; font-weight: 700; }
+    [data-testid="stMetricDelta"] { font-size: .82rem !important; }
+    /* Fix info/warning/error boxes */
+    .stAlert { border-radius: 10px !important; }
+    /* Fix tab text */
+    button[data-baseweb="tab"] { color: #4A5568 !important; }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #0694A2 !important; font-weight: 600 !important;
+    }
+    /* Fix dataframe */
+    .stDataFrame thead th { background: #EBF8FF !important; color: #2B6CB0 !important; }
+    /* Consistent spacing */
+    .stForm { border: 1px solid #E2E8F0 !important; border-radius: 12px !important; padding: 8px !important; }
+    /* Fix download button */
+    .stDownloadButton>button {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        color: #FFFFFF !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 

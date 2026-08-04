@@ -729,6 +729,29 @@ if page == "📊 Overview":
     st.write("`Python` · `Pandas`/`NumPy` · `LightGBM` · `Scikit-Learn` · "
              "`Imbalanced-Learn (SMOTE)` · `SHAP` · `Streamlit` · `Plotly`")
 
+# ── Download Report button ───────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📄 Export Report</div>', unsafe_allow_html=True)
+
+    if st.button("⬇️ Download PDF Report", use_container_width=False):
+        try:
+            from src.report_generator import generate_report
+            pdf_bytes = generate_report(
+                macro_f1=f1_score(y, y_pred_default, average='macro'),
+                precision=precision_score(y, y_pred_default, zero_division=0),
+                recall=recall_score(y, y_pred_default, zero_division=0),
+                dataset_size=len(full_df),
+                failure_rate=y.mean()*100,
+            )
+            st.download_button(
+                label="📥 Save PDF",
+                data=pdf_bytes,
+                file_name="predictive_maintenance_report.pdf",
+                mime="application/pdf",
+            )
+        except Exception as e:
+            st.error(f"PDF generation failed: {e}\nMake sure src/report_generator.py exists.")
+
 
 # =================================================================
 # PAGE: DATASET EXPLORER
@@ -1032,6 +1055,28 @@ elif page == "⚡ Live Prediction":
                 except Exception:
                     st.caption("SHAP explanation unavailable for this input.")
 
+# ── Download Report button ───────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("⬇️ Download PDF Report", key="live_pred_pdf"):
+        try:
+            from src.report_generator import generate_report
+            pdf_bytes = generate_report(
+                macro_f1=0.8501,
+                precision=0.8233,
+                recall=0.8825,
+                dataset_size=len(full_df),
+                failure_rate=y.mean()*100,
+            )
+            st.download_button(
+                label="📥 Save PDF",
+                data=pdf_bytes,
+                file_name="predictive_maintenance_report.pdf",
+                mime="application/pdf",
+                key="live_pred_pdf_download",
+            )
+        except Exception as e:
+            st.error(f"PDF generation failed: {e}")
+
 # =================================================================
 # PAGE: ROI CALCULATOR
 # =================================================================
@@ -1163,29 +1208,22 @@ elif page == "📡 Live Monitoring":
     with col_status:
         try:
             import requests as req
-            health = req.get(f"{API_URL}/health", timeout=2)
-            if health.status_code == 200:
-                hdata = health.json()
+            from src.demo_mode import is_api_reachable
+            api_online = is_api_reachable()
+            if api_online:
                 st.markdown(
-                    f'<span class="badge badge-live">'
-                    f'<span class="badge-dot"></span>'
-                    f'API ONLINE &nbsp;·&nbsp; Model: {"✅ Loaded" if hdata.get("model_loaded") else "⚠️ Not loaded"}'
-                    f'</span>',
+                    '<span class="badge badge-live">'
+                    '<span class="badge-dot"></span>API ONLINE</span>',
                     unsafe_allow_html=True,
                 )
             else:
                 st.markdown(
-                    '<span class="badge badge-demo"><span class="badge-dot"></span>API ERROR</span>',
+                    '<span class="badge badge-demo">'
+                    '<span class="badge-dot"></span>API OFFLINE</span>',
                     unsafe_allow_html=True,
                 )
         except Exception:
-            st.markdown(
-                '<span class="badge badge-demo">'
-                '<span class="badge-dot"></span>'
-                'API OFFLINE — run: python -m uvicorn api:app --reload'
-                '</span>',
-                unsafe_allow_html=True,
-            )
+            api_online = False
     with col_refresh:
         auto_refresh = st.toggle("🔄 Auto Refresh", value=False,
                                   help="Refreshes every 3 seconds")
@@ -1276,6 +1314,7 @@ elif page == "📡 Live Monitoring":
 
     if send_btn:
         from sklearn.preprocessing import LabelEncoder as _LE
+        from src.demo_mode import predict_with_fallback
         _le = _LE(); _le.fit(["H", "L", "M"])
         type_enc_live = int(_le.transform([lm_type])[0])
 
@@ -1291,128 +1330,61 @@ elif page == "📡 Live Monitoring":
             "humidity_pct":          lm_humidity,
         }
 
-        try:
-            import requests as req
-            response = req.post(f"{API_URL}/predict", json=payload, timeout=5)
+        result, is_live = predict_with_fallback(payload)
 
-            if response.status_code == 200:
-                result = response.json()
-                prob   = result.get("probability", 0)
-                pred   = 1 if prob >= live_threshold else 0
-
-                # Verdict banner
-                if prob >= 0.5:
-                    v_cls, v_txt = "verdict-bad",  f"🚨  FAILURE PREDICTED  ({prob*100:.1f}%)"
-                elif prob >= 0.3:
-                    v_cls, v_txt = "verdict-warn", f"⚠️  ELEVATED RISK  ({prob*100:.1f}%)"
-                else:
-                    v_cls, v_txt = "verdict-ok",   f"✅  HEALTHY — No action needed  ({prob*100:.1f}%)"
-
-                st.markdown(f'<div class="{v_cls}">{v_txt}</div>', unsafe_allow_html=True)
-                st.markdown("<br>", unsafe_allow_html=True)
-
-                col_g, col_d = st.columns([1, 1.5])
-
-                with col_g:
-                    # Gauge with smooth color transition
-                    if prob >= 0.5:
-                        gauge_color = "#FF5C6C"
-                    elif prob >= 0.3:
-                        gauge_color = "#FFB020"
-                    else:
-                        gauge_color = "#3ED598"
-
-                    fig_g = go.Figure(go.Indicator(
-                        mode="gauge+number+delta",
-                        value=prob * 100,
-                        delta={"reference": 50, "valueformat": ".1f",
-                               "increasing": {"color": "#FF5C6C"},
-                               "decreasing": {"color": "#3ED598"}},
-                        number={"suffix": "%", "font": {"size": 38, "color": gauge_color}},
-                        title={"text": "Failure Probability",
-                               "font": {"color": "#EAF0F7", "size": 14}},
-                        gauge={
-                            "axis": {"range": [0, 100], "tickcolor": "#697788",
-                                     "tickfont": {"color": "#697788"}},
-                            "bar":  {"color": gauge_color, "thickness": 0.28},
-                            "bgcolor": "#0D1219",
-                            "borderwidth": 0,
-                            "steps": [
-                                {"range": [0,  30], "color": "rgba(62,213,152,0.10)"},
-                                {"range": [30, 50], "color": "rgba(255,176,32,0.10)"},
-                                {"range": [50,100], "color": "rgba(255,92,108,0.10)"},
-                            ],
-                            "threshold": {
-                                "line":  {"color": "#FF5C6C", "width": 2},
-                                "thickness": 0.75,
-                                "value": live_threshold * 100,
-                            },
-                        },
-                    ))
-                    fig_g.update_layout(
-                        height=310,
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        font_color="#EAF0F7",
-                        margin=dict(l=20, r=20, t=30, b=10),
-                    )
-                    st.plotly_chart(fig_g, use_container_width=True)
-
-                with col_d:
-                    st.markdown("**📋 API Response**")
-                    st.json(result)
-
-                    # SHAP per-prediction
-                    if shap is not None:
-                        try:
-                            lgbm_live = pipeline.named_steps.get("lgbm", pipeline)
-                            exp_live  = shap.TreeExplainer(lgbm_live)
-                            x_live    = pd.DataFrame([payload])
-                            x_live.columns = X.columns
-                            sv_live   = exp_live.shap_values(x_live)
-                            sv_live   = sv_live[1] if isinstance(sv_live, list) else sv_live
-                            contrib   = pd.Series(sv_live[0], index=X.columns).sort_values()
-                            bar_clrs  = ["#FF5C6C" if v > 0 else "#3ED598" for v in contrib.values]
-
-                            fig_shap = go.Figure(go.Bar(
-                                x=contrib.values, y=contrib.index,
-                                orientation="h", marker_color=bar_clrs,
-                                text=[f"{v:+.3f}" for v in contrib.values],
-                                textposition="outside",
-                            ))
-                            fig_shap.update_layout(
-                                title="SHAP — Feature Contribution to This Prediction",
-                                xaxis_title="SHAP value",
-                                paper_bgcolor="rgba(0,0,0,0)",
-                                plot_bgcolor="rgba(0,0,0,0)",
-                                font_color="#EAF0F7",
-                                height=320,
-                                showlegend=False,
-                                margin=dict(l=10, r=60, t=40, b=10),
-                            )
-                            st.plotly_chart(fig_shap, use_container_width=True)
-
-                            st.markdown(
-                                '<div style="font-size:.8rem;color:#697788;margin-top:4px;">'
-                                '<span style="color:#FF5C6C;">■</span> Red = pushes toward failure &nbsp;|&nbsp;'
-                                '<span style="color:#3ED598;">■</span> Green = pushes toward healthy'
-                                '</div>',
-                                unsafe_allow_html=True,
-                            )
-                        except Exception:
-                            st.caption("SHAP unavailable for this input.")
-                    else:
-                        st.info("Install `shap` to see per-feature contributions.")
-
-            else:
-                st.error(f"API Error {response.status_code}: {response.text}")
-
-        except Exception as exc:
-            st.error(
-                f"❌ Cannot connect to API at `{API_URL}`\n\n"
-                f"Start it with: `python -m uvicorn api:app --reload`\n\n"
-                f"Error: {exc}"
+        # Show DEMO MODE banner if API offline
+        if not is_live:
+            st.markdown(
+                '<div style="background:rgba(217,119,6,0.10);border:1.5px solid #D97706;'
+                'border-radius:10px;padding:12px 16px;margin-bottom:12px;">'
+                '<b style="color:#D97706;">🟡 DEMO MODE</b>'
+                '<span style="color:#92400E;font-size:.85rem;margin-left:8px;">'
+                '— API offline. Showing cached demo predictions.</span>'
+                '</div>',
+                unsafe_allow_html=True,
             )
 
+        prob = result.get("probability", 0)
+        pred = result.get("prediction", 0)
+
+        if prob >= 0.5:
+            v_cls, v_txt = "verdict-bad",  f"🚨 FAILURE PREDICTED ({prob*100:.1f}%)"
+        elif prob >= 0.3:
+            v_cls, v_txt = "verdict-warn", f"⚠️ ELEVATED RISK ({prob*100:.1f}%)"
+        else:
+            v_cls, v_txt = "verdict-ok",   f"✅ HEALTHY — No action needed ({prob*100:.1f}%)"
+
+        st.markdown(f'<div class="{v_cls}">{v_txt}</div>', unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        col_g, col_d = st.columns([1, 1.5])
+        with col_g:
+            gauge_color = "#DC2626" if prob > 0.5 else ("#D97706" if prob > 0.3 else "#059669")
+            fig_g = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=prob * 100,
+                number={"suffix": "%", "font": {"size": 38, "color": gauge_color}},
+                title={"text": "Failure Probability", "font": {"color": "#1A202C"}},
+                gauge={
+                    "axis":    {"range": [0, 100], "tickcolor": "#718096"},
+                    "bar":     {"color": gauge_color},
+                    "bgcolor": "#F7FAFC",
+                    "steps": [
+                        {"range": [0,  30], "color": "rgba(5,150,105,0.10)"},
+                        {"range": [30, 50], "color": "rgba(217,119,6,0.10)"},
+                        {"range": [50,100], "color": "rgba(220,38,38,0.10)"},
+                    ],
+                    "threshold": {"line": {"color": "#DC2626", "width": 2}, "value": 50},
+                },
+            ))
+            fig_g.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", font_color="#1A202C")
+            st.plotly_chart(fig_g, use_container_width=True)
+
+        with col_d:
+            st.markdown("**📋 Prediction Result:**")
+            st.json(result)
+
+                
     # ── Auto refresh ─────────────────────────────────────────────
     if auto_refresh:
         import time

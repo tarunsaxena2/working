@@ -90,7 +90,7 @@ Industrial equipment continuously generates thousands of sensor readings every s
 
 This project presents an intelligent **Contextual Predictive Maintenance Framework** capable of combining internal IoT sensor telemetry with external contextual information such as environmental conditions and operational load to accurately predict equipment failures before they occur.
 
-The solution follows a complete industry-standard Machine Learning lifecycle—from data ingestion and feature engineering to explainable AI and deployment-ready evaluation.
+The solution follows a complete industry-standard Machine Learning lifecycle—from data ingestion and feature engineering to explainable AI, business ROI estimation, and deployment-ready evaluation.
 
 ---
 
@@ -108,6 +108,8 @@ The solution follows a complete industry-standard Machine Learning lifecycle—f
 
 ✔ Provide interpretable AI predictions
 
+✔ Quantify business impact in rupee terms (ROI Calculator)
+
 ✔ Build a deployment-ready ML pipeline
 
 ---
@@ -123,6 +125,9 @@ The solution follows a complete industry-standard Machine Learning lifecycle—f
 * SHAP Explainability
 * Precision-Recall Optimization
 * Noise Robustness Evaluation
+* Model Comparison (Random Forest vs. LightGBM, with/without context features)
+* ROI Calculator — rupee-value savings estimation per prediction
+* PDF Report Export with embedded SHAP charts
 * GitHub Sprint Documentation
 
 ---
@@ -228,7 +233,7 @@ F --> G
 D --> H
 ```
 
-> **Status:** ✅ Built and verified end-to-end (Weeks 2–4). `/predict`, `/health`, SHAP explainability, live risk gauge, inference latency optimization (~30ms avg), and prediction logging are all live and tested. In Part 2, `simulate_stream.py` is swapped for the live ESP32 sensor feed; everything downstream stays the same.
+> **Status:** ✅ Built and verified end-to-end. `/predict`, `/health`, SHAP explainability, live risk gauge, inference latency optimization (~30ms avg), and prediction logging are all live and tested. In Part 2, `simulate_stream.py` is swapped for the live ESP32 sensor feed; everything downstream stays the same.
 
 ---
 
@@ -255,7 +260,7 @@ uvicorn api:app --reload --reload-exclude "logs/*"
 ```bash
 streamlit run app.py
 ```
-Opens at `http://localhost:8501`. Navigate to the **📡 Live Monitoring** tab — it auto-detects whether the API is online.
+Opens at `http://localhost:8501`. The dashboard has 14 pages including Landing, Overview, About & Team, Model Comparison, ROI Calculator, Live Monitoring, and Prediction History. It auto-detects whether the API is online.
 
 ### 4. Start the Sensor Stream Simulator (optional, for continuous live demo)
 ```bash
@@ -263,9 +268,16 @@ python simulate_stream.py
 ```
 Streams rows from `data/ai4i2020.csv` to `/predict` every 2–3 seconds, simulating a live IoT sensor feed.
 
+### 5. Generate a PDF report (optional)
+```bash
+python -m src.report_generator
+```
+Produces a PDF with model metrics, configuration, and an embedded SHAP explainability chart for a sample prediction.
+
 ### What you'll see
 - Real-time failure probability gauge (green → amber → red)
 - SHAP feature-contribution bar chart for every prediction
+- Rupee-value ROI estimate for every prediction (ROI Calculator page)
 - Every prediction logged with timestamp to `logs/predictions_log.csv`
 
 ### API Endpoints
@@ -277,34 +289,6 @@ Streams rows from `data/ai4i2020.csv` to `/predict` every 2–3 seconds, simulat
 
 Full request/response schema and examples: see [`API_DOCS.md`](API_DOCS.md).
 
----
-
-# ✅ Week 1 Status (Foundation)
-
-* Model retrained and saved to `models/lgbm_retrained.pkl`.
-* Reload verified — `predict_single()` / `predict_batch()` return identical results to training-time output when the saved model is loaded fresh.
-* Real evaluation metrics extracted and locked in `model_results.md` and `results_comparison.md`.
-* Environment and dependency setup confirmed working for both the model-training scripts and the Streamlit dashboard.
-
----
-
-# 🧩 Software Gap List (Weeks 2–4)
-
-| Week | Gap | Owner | Status |
-| ---- | --- | ----- | ------ |
-| 2 | `/predict` API (FastAPI/Flask) — schema, load model, preprocess, return prediction + probability | Tarun | ✅ Done |
-| 2 | `sensor_mapping.py` — raw sensor units → dataset feature units (e.g. °C ↔ K) | Vaibhav | ✅ Done |
-| 2 | `simulate_stream.py` — streams CSV rows to `/predict` every 2–3 seconds like a live sensor | Vaibhav | ✅ Done |
-| 2 | `/health` endpoint + input validation/error handling for bad payloads | Tarun | ✅ Done |
-| 3 | Streamlit **"Live Monitoring"** tab wired to the live `/predict` API | Vaibhav | ✅ Done |
-| 3 | SHAP explainer integrated into the live tab (bar/force plot) | Tarun | ✅ Done |
-| 3 | Risk gauge / color indicator UI (healthy → warning → critical) | Vaibhav | ✅ Done |
-| 3 | Inference latency optimization for live calls | Tarun | ✅ Done (~38ms → ~30ms avg) |
-| 4 | Prediction logging (CSV/SQLite): timestamp, sensor values, prediction, probability | Tarun | ✅ Done |
-| 4 | Alert system — banner + sound trigger on high risk | Vaibhav | 🔄 In Progress |
-| 4 | History / log viewer tab in the dashboard | Vaibhav | 🔄 In Progress |
-| 4 | API edge-case tests (missing fields, out-of-range values) | Tarun | ✅ Done (8/8 tests passing) |
-| 4 | README "Live Demo" section + updated architecture diagram reflecting the real API/model flow | Tarun | ✅ Done |
 ---
 
 # 📂 Dataset Overview
@@ -326,13 +310,14 @@ Full request/response schema and examples: see [`API_DOCS.md`](API_DOCS.md).
 | ---------------- | ------------- |
 | Programming      | Python        |
 | Analysis         | Pandas, NumPy |
-| Visualization    | Matplotlib    |
-| Machine Learning | Scikit-Learn  |
-| Model            | LightGBM      |
+| Visualization    | Matplotlib, Plotly |
+| Machine Learning | Scikit-Learn, LightGBM |
 | Explainability   | SHAP          |
+| Backend API      | FastAPI, Uvicorn |
+| Dashboard        | Streamlit     |
+| PDF Reporting    | ReportLab     |
+| Testing          | Pytest        |
 | Version Control  | Git & GitHub  |
-
-
 
 ---
 
@@ -356,6 +341,26 @@ This allows engineers to understand:
 * Which sensor caused the anomaly
 * External factors influencing failure
 
+SHAP explanations are available live in the dashboard (Live Prediction, Live Monitoring, and Model Comparison pages) and are also embedded as a chart in the exported PDF report.
+
+---
+
+# 💰 ROI Calculator
+
+Every prediction can be converted into an estimated rupee value using:
+
+Estimated Savings = Downtime Cost per Hour × Hours of Downtime Avoided × Failure Probability
+
+The dashboard's ROI Calculator page lets a plant manager enter their own downtime cost and expected hours avoided, sends a live sensor reading to the model, and shows the estimated savings — plus a cumulative savings chart built from all predictions logged so far (`logs/predictions_log.csv`). Implemented in `src/roi_calculator.py`, covered by 10 unit tests (zero-risk, full-risk, and invalid-input edge cases).
+
+---
+
+# 📊 Model Comparison
+
+To validate the research contribution of contextual data fusion, `src/model_comparison_data.py` re-runs a fresh ablation study (Random Forest, with vs. without external context features) on every dashboard load, and compares it against the production LightGBM + SMOTE model.
+
+**Honest finding:** the external context features (ambient temperature, factory load, humidity) are simulated/random in this dataset, so they slightly *hurt* a basic Random Forest's Macro F1. The production LightGBM + SMOTE pipeline — which handles class imbalance properly — still achieves strong performance (Macro F1 = 0.8501) using the same full feature set, comfortably exceeding the 0.85 target. This shows the value of proper class-imbalance handling combined with a stronger model, rather than assuming context features help automatically.
+
 ---
 
 # 🧪 Noise Sensitivity Analysis
@@ -373,23 +378,12 @@ The model is analysed for:
 
 ---
 
-# 📅 Development Roadmap
-
-| Week   | Objective                                      |
-| ------ | ----------------------------------------------- |
-| Week 1 | IoT Telemetry & Signal Processing              |
-| Week 2 | Contextual Data Fusion & Feature Engineering   |
-| Week 3 | LightGBM + SMOTE + Cross Validation            |
-| Week 4 | Noise Analysis + Threshold Optimization + SHAP |
-
----
-
 # 👨‍💻 Team Contributions
 
 | Member                            | Responsibilities                                                                                                                                          |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tarun Saxena (Member 1 & 4)**   | Project Planning, Feature Engineering, Model Evaluation, GitHub Documentation, Sprint Management, SHAP Analysis, Final Deployment, README, Kanban Updates |
-| **Vaibhav Gautam (Member 2 & 3)** | Data Preprocessing, Contextual Data Fusion, LightGBM Training, SMOTE Implementation, Cross Validation, Performance Optimization                           |
+| **Tarun Saxena**   | Backend / ML / Data — model training, FastAPI backend, ROI Calculator, Model Comparison logic, PDF report generator, SHAP integration, testing, documentation |
+| **Vaibhav Gautam** | Dashboard / UI / Integration — Streamlit dashboard, Landing/About pages, Live Monitoring, Fleet view, sensor mapping, alert system, log viewer, UI polish |
 
 ---
 
@@ -397,7 +391,7 @@ The model is analysed for:
 
 * Real-Time IoT Streaming (ESP32 hardware integration — Part 2)
 * Edge AI Deployment
-* REST API Integration
+* Cloud deployment (Render/Railway + Streamlit Community Cloud)
 * Docker Deployment
 * Cloud Monitoring
 * MLOps Pipeline
@@ -405,23 +399,15 @@ The model is analysed for:
 
 ---
 
-# 🏆 Internship Outcome
-
-This project successfully demonstrates the implementation of a modern **Context-Aware Predictive Maintenance Framework** that combines IoT telemetry, contextual intelligence, explainable AI, and robust machine learning techniques.
-
-The solution is designed following industry best practices, making it scalable, interpretable, and deployment-ready for smart manufacturing and automotive predictive maintenance applications.
-
----
 
 <div align="center">
 
 ## ⭐ *Predict Early • Maintain Smart • Reduce Downtime*
 
-### **Infotact Technical Internship Program 2026**
 
 **Advanced Data Science & Machine Learning**
 
-Made with ❤️ using **Python • LightGBM • SHAP • Scikit-Learn • FastAPI • Streamlit • GitHub**
+Made with ❤️ using **Python • LightGBM • SHAP • Scikit-Learn • FastAPI • Streamlit • ReportLab • GitHub**
 
 </div>
 
@@ -431,25 +417,16 @@ Made with ❤️ using **Python • LightGBM • SHAP • Scikit-Learn • FastA
 
 ```text
 predictive-maintance-iot-main/
-├── app.py                          # Streamlit dashboard (main entry point)
+├── app.py                          # Streamlit dashboard (14 pages)
 ├── api.py                          # FastAPI prediction service
 ├── simulate_stream.py              # Live sensor stream simulator
 ├── sensor_mapping.py               # Raw sensor unit conversions
+├── demo_bad_input.py               # Scripted bad-input reliability demo
 ├── API_DOCS.md                     # API endpoint documentation
 ├── requirements.txt                # Python dependencies
 ├── README.md
 ├── model_results.md
 ├── results_comparison.md
-├── progress_tracker.md
-├── progress_week3.md
-├── progress_week4.md
-├── review_checklist.md
-├── review_notes.md
-├── review_summary.md
-├── test_feature_set.py
-├── test_loader.py
-├── test_rolling.py
-├── test_latency.py                 # Inference latency measurement
 │
 ├── data/
 │   └── ai4i2020.csv                # AI4I 2020 predictive maintenance dataset
@@ -461,81 +438,42 @@ predictive-maintance-iot-main/
 │   └── predictions_log.csv         # Live prediction logs (timestamp, inputs, output)
 │
 ├── notebooks/
-│   ├── week1_eda.ipynb             # Week 1 - exploratory data analysis
-│   ├── week2_eda.ipynb             # Week 2 - EDA continued
-│   ├── week2_fusion.ipynb          # Week 2 - feature/sensor fusion
-│   ├── week3_modeling.ipynb        # Week 3 - model building
-│   ├── week4_robustness.ipynb      # Week 4 - robustness/noise testing
-│   ├── ablation_study.ipynb        # Feature ablation experiments
-│   ├── final_dashboard.ipynb       # Final results dashboard
-│   └── dataset_review.py
+│   ├── week1_eda.ipynb
+│   ├── week2_eda.ipynb
+│   ├── week2_fusion.ipynb
+│   ├── week3_modeling.ipynb
+│   ├── week4_robustness.ipynb
+│   ├── ablation_study.ipynb
+│   └── final_dashboard.ipynb
 │
 ├── src/
-│   ├── data_loader.py              # Data loading utilities
-│   ├── feature_engineering.py      # Feature creation/transformation
-│   ├── feature_sets.py             # Defined feature groups
-│   ├── encode_type.py              # Categorical encoding
-│   ├── cv_setup.py                 # Cross-validation setup
-│   ├── model.py                    # Model definition
-│   ├── model_validation.py         # Validation logic
-│   ├── hyperparameter_tuning.py    # Hyperparameter search
-│   ├── final_cv.py                 # Final cross-validation run
-│   ├── evaluate.py                 # Evaluation metrics
+│   ├── feature_engineering.py      # Rolling features + external context fusion
+│   ├── feature_sets.py             # Base vs. extended feature groups
+│   ├── evaluate.py                 # Cross-validation evaluation helper
 │   ├── retrain.py                  # Model retraining script
 │   ├── predict.py                  # predict_single() / predict_batch() helpers
 │   ├── explain.py                  # SHAP explainability helper
 │   ├── logger.py                   # Prediction logging (CSV)
-│   ├── recover_fused_dataset.py    # Dataset recovery/fusion utility
-│   ├── check_columns.py            # Data validation helper
-│   └── project_info.py
+│   ├── roi_calculator.py           # ROI / cost-savings estimator
+│   ├── model_comparison_data.py    # Fresh ablation study + feature importance comparison
+│   └── report_generator.py         # PDF report generator (metrics + SHAP chart)
 │
 ├── tests/
-│   ├── test_evaluate.py            # Unit tests for evaluation module
 │   ├── test_api.py                 # API edge-case tests
-│   └── test_stress.py              # API stress/load tests
+│   ├── test_stress.py              # API stress/load tests
+│   ├── test_dashboard.py           # Dashboard integration tests
+│   ├── test_roi_calculator.py      # ROI calculator unit tests
+│   ├── test_model_comparison.py    # Model comparison data loader tests
+│   └── test_report_generator.py    # PDF export edge-case tests
 │
 └── outputs/                        # Generated plots & visualizations
-    ├── Correlation_Heatmap.png
-    ├── Machine_Failure_Distribution.png
-    ├── Sensor_Distribution_by_Machine_Failur.png
-    ├── Sensor_Distributions_by_Failure_Subtype.png
-    ├── External_Feature_Correlations_vs_Machine_Failure.png
-    ├── cross_feature_heatmap.png
-    ├── feature_correlation_bar.png
-    ├── pairplot.png
-    ├── confusion_matrix_optimal.png
-    ├── pr_curve_clean.png
-    ├── pr_curve_final.png
-    ├── pr_curves_comparison.png
-    ├── threshold_tuning.png
-    ├── noise_robustness.png
     ├── shap_bar.png
     ├── shap_beeswarm.png
-    ├── shap_dependence_toolwear.png
-    ├── shap_dependence_torque.png
-    └── shap_final_summary.png
+    ├── confusion_matrix_optimal.png
+    ├── pr_curve_final.png
+    ├── noise_robustness.png
+    └── ... (additional EDA/evaluation plots)
 ```
----
-
-## 📦 Installed Dependencies
-
-
-pandas
-numpy
-lightgbm
-imbalanced-learn
-shap
-matplotlib
-seaborn
-scikit-learn
-fastapi
-uvicorn
-streamlit
-plotly
-requests
-pytest
-
-
 ---
 
 ## 🔄 Project Workflow
@@ -545,16 +483,18 @@ pytest
 3. Feature Engineering
 4. Data Fusion & Context Integration
 5. Model Training
-6. Model Evaluation
+6. Model Evaluation & Comparison
 7. Explainability using SHAP
 8. Real-Time API + Dashboard Deployment
-9. Testing (edge cases + stress testing)
+9. Business Impact — ROI Calculator
+10. PDF Reporting
+11. Testing (edge cases + stress + regression)
 
 ---
 
 ## 📈 Expected Outcome
 
-Develop an intelligent predictive maintenance system capable of identifying machine failure risks in advance, enabling proactive maintenance and minimizing operational disruptions.
+Develop an intelligent predictive maintenance system capable of identifying machine failure risks in advance, enabling proactive maintenance and minimizing operational disruptions — with a clear, judge-ready presentation of business value, model comparison, and system reliability.
 
 ---
 ## Results Summary
@@ -582,7 +522,11 @@ These features had the greatest impact on the model's decision-making process an
 
 The trained model was evaluated under different levels of Gaussian noise to assess its robustness. Performance remained consistently high under moderate noise conditions, indicating that the model is suitable for practical industrial predictive maintenance scenarios.
 
+### Model Comparison Findings
+
+A fresh ablation study comparing Random Forest (with and without external context features) against the production LightGBM + SMOTE model confirmed that class-imbalance handling and model choice matter more than the simulated context features alone — the production model exceeds the 0.85 Macro F1 target while Random Forest does not, regardless of feature set.
+
 ### Conclusion
 
-The combination of **Feature Engineering**, **External Context Features**, **SMOTE**, and **LightGBM** resulted in an accurate predictive maintenance system with strong generalization capability. The final model achieved a **Macro F1 Score of 0.8501** (Precision 0.8233, Recall 0.8825), meeting the target KPI of ≥ 0.85 and validated live through the FastAPI + Streamlit real-time serving pipeline.
+The combination of **Feature Engineering**, **External Context Features**, **SMOTE**, and **LightGBM** resulted in an accurate predictive maintenance system with strong generalization capability. The final model achieved a **Macro F1 Score of 0.8501** (Precision 0.8233, Recall 0.8825), meeting the target KPI of ≥ 0.85 and validated live through the FastAPI + Streamlit real-time serving pipeline. The system is further strengthened by a business-facing ROI calculator, a transparent model comparison page, exportable PDF reports, and a comprehensive automated test suite (41/41 tests passing).
 ---

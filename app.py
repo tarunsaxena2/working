@@ -1,7 +1,6 @@
 """
 =================================================================
  Contextual Predictive Maintenance (IoT Edge AI) — Dashboard
- Infotact Technical Internship Program 2026
  Repo: predictive-maintance-iot  (Tarun Saxena · Vaibhav Gautam)
 =================================================================
 
@@ -485,7 +484,7 @@ st.sidebar.markdown("""
     <div style="font-size: 1.15rem; font-weight: 700; color: #EAF0F7;">🛠️ Predictive Maintenance</div>
     <div style="font-family:'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
         text-transform: uppercase; color: #697788; margin-top: 4px;">
-        Contextual IoT Edge AI · Infotact 2026
+        Contextual IoT Edge AI ·
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -572,7 +571,7 @@ if page == "🏠 Landing":
             </span>
         </div>
         <div style="font-size:.9rem; color:#718096;">
-            Infotact Solutions & Co. · Bengaluru · Internship 2026
+            Hindustan College Of Sciance And Technology, Mathura, India
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1410,7 +1409,7 @@ elif page == "📡 Live Monitoring":
             st.markdown("**📋 Prediction Result:**")
             st.json(result)
 
-                
+
     # ── Auto refresh ─────────────────────────────────────────────
     if auto_refresh:
         import time
@@ -1945,7 +1944,7 @@ elif page == "🖼️ Output Gallery":
 # =================================================================
 elif page == "👥 About & Team":
     console_header("👥", "About & Team", eyebrow="PROJECT INFO",
-                   subtitle="Contextual Predictive Maintenance — Infotact Technical Internship 2026")
+                   subtitle="Contextual Predictive Maintenance project built by Tarun Saxena & Vaibhav Gautam for Hindustan College of Science & Technology")
 
     # ── Team cards ───────────────────────────────────────────────
     st.markdown('<div class="section-title">👨‍💻 Team</div>', unsafe_allow_html=True)
@@ -1977,9 +1976,9 @@ elif page == "👥 About & Team":
     st.markdown('<div class="section-title">📋 Project Information</div>', unsafe_allow_html=True)
     info_cols = st.columns(3)
     for col, label, value in [
-        (info_cols[0], "Organization",      "Infotact Solutions & Co."),
-        (info_cols[1], "Location",          "Bengaluru, Karnataka"),
-        (info_cols[2], "Internship Period", "25 May – 25 Aug 2026"),
+        (info_cols[0], "Organization",      "Hindustan College of Science & Technology"),
+        (info_cols[1], "Location",          "Mathura, Uttar Pradesh, India"),
+        (info_cols[2], "Innoation Day ", "15 Octuber"),
     ]:
         with col:
             st.markdown(
@@ -2110,4 +2109,4 @@ elif page == "👥 About & Team":
 
 else:
     st.error("Page not found. Please select a valid page from the sidebar.")
-    
+

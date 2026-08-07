@@ -499,6 +499,7 @@ page = st.sidebar.radio(
         "🔍 Dataset Explorer",
         "🎯 Model Performance",
         "📈 Model Comparison",
+        "📤 Batch CSV Upload",
         "🧠 Explainability (SHAP)",
         "🌊 Noise Robustness",
         "⚡ Live Prediction",
@@ -923,7 +924,84 @@ elif page == "📈 Model Comparison":
         "the target of 0.85. This shows the value of proper class-imbalance handling combined "
         "with a stronger model, rather than context features alone."
     )
+# =================================================================
+# PAGE: BATCH CSV UPLOAD
+# =================================================================
+elif page == "📤 Batch CSV Upload":
+    console_header("📤", "Batch CSV Upload", eyebrow="BULK PREDICTION",
+                    subtitle="Upload your own sensor readings CSV and get failure predictions for every row")
 
+    info_box(
+        "<b>Expected CSV columns</b> (exact names, case-sensitive):<br>"
+        "<code>Air_temperature_K, Process_temperature_K, Rotational_speed_rpm, "
+        "Torque_Nm, Tool_wear_min, Type_enc, ambient_temp_C, factory_load_pct, humidity_pct</code><br><br>"
+        "<code>Type_enc</code> should be 0 (H), 1 (L), or 2 (M)."
+    )
+
+    uploaded_file = st.file_uploader("Upload sensor readings CSV", type=["csv"])
+
+    if uploaded_file is not None:
+        try:
+            upload_df = pd.read_csv(uploaded_file)
+
+            required_cols = [
+                "Air_temperature_K", "Process_temperature_K", "Rotational_speed_rpm",
+                "Torque_Nm", "Tool_wear_min", "Type_enc",
+                "ambient_temp_C", "factory_load_pct", "humidity_pct"
+            ]
+            missing_cols = [c for c in required_cols if c not in upload_df.columns]
+
+            if missing_cols:
+                st.error(f"❌ Missing required columns: {', '.join(missing_cols)}")
+            else:
+                st.success(f"✅ Loaded {len(upload_df):,} rows. Running predictions...")
+
+                X_batch = upload_df[required_cols].copy()
+                probas = pipeline.predict_proba(X_batch)[:, 1]
+                preds = (probas >= 0.5).astype(int)
+
+                result_df = upload_df.copy()
+                result_df["prediction"] = preds
+                result_df["probability"] = probas
+                result_df["risk_level"] = pd.cut(
+                    probas, bins=[-0.01, 0.3, 0.5, 1.0],
+                    labels=["Healthy", "Elevated Risk", "Critical"]
+                )
+
+                c1, c2, c3, c4 = st.columns(4)
+                total = len(result_df)
+                failures = int(result_df["prediction"].sum())
+                for col, label, value, sub in [
+                    (c1, "Total Rows", f"{total:,}", "Uploaded"),
+                    (c2, "Failures Flagged", f"{failures:,}", f"{failures/total*100:.1f}% of total"),
+                    (c3, "Avg Probability", f"{probas.mean():.4f}", "Mean failure risk"),
+                    (c4, "Max Probability", f"{probas.max():.4f}", "Highest risk row"),
+                ]:
+                    kpi_card(col, label, value, sub)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown('<div class="section-title">📊 Risk Distribution</div>', unsafe_allow_html=True)
+                risk_counts = result_df["risk_level"].value_counts()
+                fig = px.pie(
+                    values=risk_counts.values, names=risk_counts.index, hole=0.55,
+                    color=risk_counts.index,
+                    color_discrete_map={"Healthy": "#3ED598", "Elevated Risk": "#FFB020", "Critical": "#FF5C6C"},
+                )
+                fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=300)
+                st.plotly_chart(fig, use_container_width=True)
+
+                st.markdown('<div class="section-title">📋 Prediction Results</div>', unsafe_allow_html=True)
+                st.dataframe(result_df, use_container_width=True, height=400)
+
+                st.download_button(
+                    "⬇️ Download Predictions CSV",
+                    result_df.to_csv(index=False).encode(),
+                    "batch_predictions.csv",
+                    mime="text/csv",
+                )
+
+        except Exception as e:
+            st.error(f"❌ Could not process the uploaded file: {e}")
 # =================================================================
 # PAGE: SHAP EXPLAINABILITY
 # =================================================================

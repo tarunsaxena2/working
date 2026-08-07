@@ -3,7 +3,8 @@ __pycache__/
 .env
 venv/
 .venv/
-
+logs/
+data/
 models/
 
 .DS_Store

@@ -1,7 +1,7 @@
 📌 Project : Contextual Predictive Maintenance (IoT Edge AI)
 📖 Project Overview
 
-This project was developed as part of the Infotact Technical Internship Program – Advanced Data Science & Machine Learning (2026). The primary objective is to build an intelligent Contextual Predictive Maintenance System capable of predicting industrial equipment failures before they occur by combining IoT sensor telemetry with external contextual information.
+This project was developed as part of the Advanced Data Science & Machine Learning (2026). The primary objective is to build an intelligent Contextual Predictive Maintenance System capable of predicting industrial equipment failures before they occur by combining IoT sensor telemetry with external contextual information.
 
 Unlike traditional predictive maintenance models that rely only on internal machine sensors, this solution integrates environmental and operational context such as ambient temperature and machine load conditions to improve prediction accuracy and real-world reliability.
 
@@ -56,7 +56,7 @@ Noise Robustness Analysis
 Threshold Optimization
 Final Deployment Pipeline
 ---
-
+![Tests](https://github.com/tarunsaxena2/working/actions/workflows/tests.yml/badge.svg)
 <div align="center">
 
 

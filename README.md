@@ -56,7 +56,7 @@ Noise Robustness Analysis
 Threshold Optimization
 Final Deployment Pipeline
 ---
-![Tests](https://github.com/tarunsaxena2/working/actions/workflows/tests.yml/badge.svg)
+
 <div align="center">
 
 
